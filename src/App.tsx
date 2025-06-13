@@ -8,6 +8,9 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Empresa from "./pages/Empresa";
 import Usuarios from "./pages/Usuarios";
+import Clientes from "./pages/Clientes";
+import Fornecedores from "./pages/Fornecedores";
+import Produtos from "./pages/Produtos";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,10 +27,10 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/empresa" element={<Empresa />} />
           <Route path="/usuarios" element={<Usuarios />} />
+          <Route path="/clientes" element={<Clientes />} />
+          <Route path="/fornecedores" element={<Fornecedores />} />
+          <Route path="/produtos" element={<Produtos />} />
           {/* Rotas placeholder para próximas fases */}
-          <Route path="/clientes" element={<div className="p-8">Módulo de Clientes - Em desenvolvimento</div>} />
-          <Route path="/fornecedores" element={<div className="p-8">Módulo de Fornecedores - Em desenvolvimento</div>} />
-          <Route path="/produtos" element={<div className="p-8">Módulo de Produtos - Em desenvolvimento</div>} />
           <Route path="/orcamentos" element={<div className="p-8">Módulo de Orçamentos - Em desenvolvimento</div>} />
           <Route path="/pedidos-venda" element={<div className="p-8">Módulo de Pedidos de Venda - Em desenvolvimento</div>} />
           <Route path="/pedidos-compra" element={<div className="p-8">Módulo de Pedidos de Compra - Em desenvolvimento</div>} />
