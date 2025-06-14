@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { CreditCard, Plus, Search, DollarSign, AlertCircle, CheckCircle, Undo2, Eye } from "lucide-react"
+import { CreditCard, Plus, Search, DollarSign, AlertCircle, CheckCircle, Undo2, Eye, Clock } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { ContaDetalhesModal } from "@/components/contas-receber/ContaDetalhesModal"
 import { RecebimentoModal } from "@/components/contas-receber/RecebimentoModal"
@@ -148,25 +148,30 @@ export default function ContasReceber() {
     setEdicaoModal({ isOpen: true, conta })
   }
 
-  const handleConfirmarRecebimento = (contaId: number, dataRecebimento: string) => {
+  const handleConfirmarRecebimento = (contaId: number, dataRecebimento: string, valorPago: number) => {
     const conta = contas.find(c => c.id === contaId)
     if (!conta) return
+
+    const novoValorPago = (conta.valorPago || 0) + valorPago
+    const novoStatus = novoValorPago >= conta.valorOriginal ? "Pago" : "Parcial"
 
     setContas(prev => prev.map(c => 
       c.id === contaId 
         ? { 
             ...c, 
-            status: "Pago",
-            dataPagamento: dataRecebimento,
-            valorPago: c.valorOriginal,
-            formaPagamento: "PIX"
+            status: novoStatus,
+            dataPagamento: novoStatus === "Pago" ? dataRecebimento : c.dataPagamento,
+            valorPago: novoValorPago,
+            formaPagamento: novoStatus === "Pago" ? "PIX" : c.formaPagamento
           }
         : c
     ))
 
+    const statusTexto = novoStatus === "Pago" ? "quitado" : "parcialmente pago"
+    
     toast({
       title: "Recebimento registrado",
-      description: `Recebimento de ${conta.numeroDocumento} foi registrado com sucesso.`,
+      description: `Recebimento de ${formatCurrency(valorPago)} para ${conta.numeroDocumento} foi registrado. Status: ${statusTexto}.`,
     })
   }
 
@@ -211,8 +216,9 @@ export default function ContasReceber() {
     })
   }
 
-  const totalPendente = contas.filter(c => c.status === "Pendente").reduce((sum, c) => sum + c.valorOriginal, 0)
+  const totalPendente = contas.filter(c => c.status === "Pendente").reduce((sum, c) => sum + (c.valorOriginal - (c.valorPago || 0)), 0)
   const totalVencido = contas.filter(c => c.status === "Vencido").reduce((sum, c) => sum + (c.valorOriginal - (c.valorPago || 0)), 0)
+  const totalParcial = contas.filter(c => c.status === "Parcial").reduce((sum, c) => sum + (c.valorOriginal - (c.valorPago || 0)), 0)
   const totalRecebido = contas.filter(c => c.status === "Pago").reduce((sum, c) => sum + (c.valorPago || 0), 0)
 
   return (
@@ -231,7 +237,7 @@ export default function ContasReceber() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -255,6 +261,20 @@ export default function ContasReceber() {
               <div>
                 <p className="text-sm text-gray-600">Vencido</p>
                 <p className="text-lg font-bold">{formatCurrency(totalVencido)}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-yellow-100 rounded-full">
+                <Clock className="h-5 w-5 text-yellow-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Parcial</p>
+                <p className="text-lg font-bold">{formatCurrency(totalParcial)}</p>
               </div>
             </div>
           </CardContent>
@@ -325,6 +345,13 @@ export default function ContasReceber() {
                   Pendentes
                 </Button>
                 <Button
+                  variant={statusFilter === "Parcial" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setStatusFilter("Parcial")}
+                >
+                  Parciais
+                </Button>
+                <Button
                   variant={statusFilter === "Vencido" ? "default" : "outline"}
                   size="sm"
                   onClick={() => setStatusFilter("Vencido")}
@@ -355,98 +382,107 @@ export default function ContasReceber() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredContas.map((conta) => (
-                  <TableRow key={conta.id}>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{conta.numeroDocumento}</div>
-                        <div className="text-sm text-gray-500">{conta.descricao}</div>
-                        <div className="sm:hidden text-sm text-gray-500">{conta.cliente}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell">{conta.cliente}</TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      <div className="text-sm">
-                        {formatDate(conta.dataVencimento)}
-                        {conta.dataPagamento && (
-                          <div className="text-green-600">
-                            Pago em {formatDate(conta.dataPagamento)}
-                          </div>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{formatCurrency(conta.valorOriginal)}</div>
-                        {conta.valorPago && conta.valorPago < conta.valorOriginal && (
-                          <div className="text-sm text-green-600">
-                            Pago: {formatCurrency(conta.valorPago)}
-                          </div>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell">
-                      <div className="flex items-center gap-2">
-                        {getStatusIcon(conta.status)}
-                        <Badge variant={getStatusColor(conta.status) as any}>
-                          {conta.status}
-                        </Badge>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => openDetalhes(conta)}
-                        >
-                          <Eye className="h-4 w-4 mr-1" />
-                          Detalhes
-                        </Button>
-                        {conta.status !== "Pago" && (
+                {filteredContas.map((conta) => {
+                  const saldoDevedor = conta.valorOriginal - (conta.valorPago || 0)
+                  
+                  return (
+                    <TableRow key={conta.id}>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{conta.numeroDocumento}</div>
+                          <div className="text-sm text-gray-500">{conta.descricao}</div>
+                          <div className="sm:hidden text-sm text-gray-500">{conta.cliente}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell">{conta.cliente}</TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <div className="text-sm">
+                          {formatDate(conta.dataVencimento)}
+                          {conta.dataPagamento && (
+                            <div className="text-green-600">
+                              Pago em {formatDate(conta.dataPagamento)}
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{formatCurrency(conta.valorOriginal)}</div>
+                          {conta.valorPago && conta.valorPago > 0 && (
+                            <div className="text-sm text-green-600">
+                              Pago: {formatCurrency(conta.valorPago)}
+                            </div>
+                          )}
+                          {conta.status === "Parcial" && (
+                            <div className="text-sm text-red-600">
+                              Saldo: {formatCurrency(saldoDevedor)}
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        <div className="flex items-center gap-2">
+                          {getStatusIcon(conta.status)}
+                          <Badge variant={getStatusColor(conta.status) as any}>
+                            {conta.status}
+                          </Badge>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
                           <Button
                             size="sm"
-                            onClick={() => openRecebimento(conta.id)}
+                            variant="outline"
+                            onClick={() => openDetalhes(conta)}
                           >
-                            Receber
+                            <Eye className="h-4 w-4 mr-1" />
+                            Detalhes
                           </Button>
-                        )}
-                        {conta.status === "Pago" && (
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                              >
-                                <Undo2 className="h-4 w-4 mr-1" />
-                                Estornar
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Confirmar Estorno</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Tem certeza que deseja estornar o recebimento de {conta.numeroDocumento}?
-                                  Esta ação desfará o recebimento de {formatCurrency(conta.valorPago || 0)} e 
-                                  voltará a conta para o status pendente.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction 
-                                  onClick={() => handleEstornarPagamento(conta.id)}
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          {conta.status !== "Pago" && (
+                            <Button
+                              size="sm"
+                              onClick={() => openRecebimento(conta.id)}
+                            >
+                              Receber
+                            </Button>
+                          )}
+                          {conta.status === "Pago" && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
                                 >
-                                  Estornar Recebimento
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                                  <Undo2 className="h-4 w-4 mr-1" />
+                                  Estornar
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Confirmar Estorno</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Tem certeza que deseja estornar o recebimento de {conta.numeroDocumento}?
+                                    Esta ação desfará o recebimento de {formatCurrency(conta.valorPago || 0)} e 
+                                    voltará a conta para o status pendente.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction 
+                                    onClick={() => handleEstornarPagamento(conta.id)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Estornar Recebimento
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
               </TableBody>
             </Table>
           </div>
@@ -468,6 +504,7 @@ export default function ContasReceber() {
 
       <RecebimentoModal
         contaId={recebimentoModal.contaId}
+        contas={contas}
         isOpen={recebimentoModal.isOpen}
         onClose={() => setRecebimentoModal({ isOpen: false, contaId: null })}
         onConfirm={handleConfirmarRecebimento}
