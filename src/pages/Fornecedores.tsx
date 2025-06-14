@@ -137,6 +137,10 @@ export default function Fornecedores() {
     console.log("Ver detalhes do fornecedor:", id)
   }
 
+  const handleDeleteFornecedor = (fornecedor: FornecedorComId) => {
+    console.log("Delete fornecedor:", fornecedor.id)
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -170,7 +174,7 @@ export default function Fornecedores() {
           <FornecedoresTable
             fornecedores={filteredFornecedores}
             onEdit={handleEditFornecedor}
-            onDelete={(id) => console.log("Delete fornecedor:", id)}
+            onDelete={handleDeleteFornecedor}
           />
         </TabsContent>
         

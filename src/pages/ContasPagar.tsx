@@ -6,14 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Search, Plus, CreditCard, AlertCircle, CheckCircle, Clock, Eye } from "lucide-react"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+import { ContaDetalhesModal } from "@/components/contas-pagar/ContaDetalhesModal"
+import { useToast } from "@/hooks/use-toast"
 
 interface ContaPagar {
   id: number
@@ -29,8 +23,10 @@ interface ContaPagar {
 export default function ContasPagar() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedConta, setSelectedConta] = useState<ContaPagar | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const { toast } = useToast()
   
-  const [contas] = useState<ContaPagar[]>([
+  const [contas, setContas] = useState<ContaPagar[]>([
     {
       id: 1,
       fornecedor: "Aços Especiais Ltda",
@@ -91,6 +87,27 @@ export default function ContasPagar() {
 
   const handleVerDetalhes = (conta: ContaPagar) => {
     setSelectedConta(conta)
+    setIsModalOpen(true)
+  }
+
+  const handlePagar = (id: number) => {
+    setContas(contas.map(conta => 
+      conta.id === id ? { ...conta, status: 'Pago' as const } : conta
+    ))
+    setIsModalOpen(false)
+    toast({
+      title: "Pagamento realizado",
+      description: "A conta foi marcada como paga com sucesso.",
+    })
+  }
+
+  const handleEditar = (id: number) => {
+    console.log("Editar conta:", id)
+    setIsModalOpen(false)
+    toast({
+      title: "Funcionalidade em desenvolvimento",
+      description: "A edição de contas será implementada em breve.",
+    })
   }
 
   return (
@@ -199,81 +216,14 @@ export default function ContasPagar() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleVerDetalhes(conta)}
-                          >
-                            <Eye className="h-4 w-4 mr-2" />
-                            Ver Detalhes
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Detalhes da Conta</DialogTitle>
-                            <DialogDescription>
-                              Informações completas sobre a conta a pagar
-                            </DialogDescription>
-                          </DialogHeader>
-                          {selectedConta && (
-                            <div className="space-y-4">
-                              <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                  <label className="text-sm font-medium text-gray-500">Fornecedor</label>
-                                  <p className="text-base">{selectedConta.fornecedor}</p>
-                                </div>
-                                <div>
-                                  <label className="text-sm font-medium text-gray-500">Documento</label>
-                                  <p className="text-base font-mono">{selectedConta.documento}</p>
-                                </div>
-                              </div>
-                              
-                              <div>
-                                <label className="text-sm font-medium text-gray-500">Descrição</label>
-                                <p className="text-base">{selectedConta.descricao}</p>
-                              </div>
-                              
-                              <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                  <label className="text-sm font-medium text-gray-500">Vencimento</label>
-                                  <p className="text-base">{new Date(selectedConta.vencimento).toLocaleDateString('pt-BR')}</p>
-                                </div>
-                                <div>
-                                  <label className="text-sm font-medium text-gray-500">Valor</label>
-                                  <p className="text-base font-bold">R$ {selectedConta.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                                </div>
-                              </div>
-                              
-                              <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                  <label className="text-sm font-medium text-gray-500">Categoria</label>
-                                  <p className="text-base">{selectedConta.categoria}</p>
-                                </div>
-                                <div>
-                                  <label className="text-sm font-medium text-gray-500">Status</label>
-                                  <Badge variant={getStatusVariant(selectedConta.status)} className="flex items-center gap-1 w-fit">
-                                    {getStatusIcon(selectedConta.status)}
-                                    {selectedConta.status}
-                                  </Badge>
-                                </div>
-                              </div>
-                              
-                              <div className="pt-4 border-t">
-                                <div className="flex gap-2">
-                                  <Button className="flex-1">
-                                    Efetuar Pagamento
-                                  </Button>
-                                  <Button variant="outline" className="flex-1">
-                                    Editar
-                                  </Button>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </DialogContent>
-                      </Dialog>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleVerDetalhes(conta)}
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        Ver Detalhes
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -282,6 +232,14 @@ export default function ContasPagar() {
           </div>
         </CardContent>
       </Card>
+
+      <ContaDetalhesModal
+        conta={selectedConta}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onPagar={handlePagar}
+        onEditar={handleEditar}
+      />
     </div>
   )
 }
