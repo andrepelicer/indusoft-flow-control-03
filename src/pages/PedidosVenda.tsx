@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -7,7 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ShoppingCart, Plus, Search, Edit, Trash2, Eye, CheckCircle } from "lucide-react"
 import { useState } from "react"
 import { PedidoVendaForm } from "@/components/PedidoVendaForm"
-import { type Pedido } from "@/lib/validations"
+import { PedidoVendaDetalhes } from "@/components/PedidoVendaDetalhes"
+import { type Pedido, ItemPedidoExpandido } from "@/lib/validations"
 import { useToast } from "@/hooks/use-toast"
 import {
   AlertDialog,
@@ -20,12 +20,14 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 
-type PedidoComId = Pedido & { id: number }
+type PedidoComId = Pedido & { id: number; itens?: ItemPedidoExpandido[] }
 
 const PedidosVenda = () => {
   const [searchTerm, setSearchTerm] = useState("")
   const [formOpen, setFormOpen] = useState(false)
+  const [detalhesOpen, setDetalhesOpen] = useState(false)
   const [editingPedido, setEditingPedido] = useState<PedidoComId | undefined>()
+  const [viewingPedido, setViewingPedido] = useState<PedidoComId | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [pedidoToDelete, setPedidoToDelete] = useState<number | null>(null)
   const { toast } = useToast()
@@ -41,7 +43,8 @@ const PedidosVenda = () => {
       status: "Aprovado" as const,
       observacoes: "Entrega em lote único",
       desconto: 2.5,
-      valorTotal: 18750.00
+      valorTotal: 18750.00,
+      itens: []
     },
     { 
       id: 2, 
@@ -53,7 +56,8 @@ const PedidosVenda = () => {
       status: "Faturado" as const,
       observacoes: "Pagamento à vista",
       desconto: 0,
-      valorTotal: 9200.00
+      valorTotal: 9200.00,
+      itens: []
     },
     { 
       id: 3, 
@@ -65,7 +69,8 @@ const PedidosVenda = () => {
       status: "Pendente" as const,
       observacoes: "Aguardando aprovação do cliente",
       desconto: 5,
-      valorTotal: 14300.00
+      valorTotal: 14300.00,
+      itens: []
     },
   ])
 
@@ -91,7 +96,9 @@ const PedidosVenda = () => {
   const pedidosFaturados = pedidos.filter(p => p.status === 'Faturado')
   const valorTotalPedidos = pedidos.reduce((sum, p) => sum + p.valorTotal, 0)
 
-  const handleSavePedido = (pedidoData: Pedido) => {
+  const handleSavePedido = (pedidoData: Pedido & { itens: ItemPedidoExpandido[] }) => {
+    console.log('Salvando pedido com itens:', pedidoData)
+    
     if (editingPedido) {
       setPedidos(prev => prev.map(p => 
         p.id === editingPedido.id ? { ...pedidoData, id: editingPedido.id } as PedidoComId : p
@@ -106,6 +113,11 @@ const PedidosVenda = () => {
   const handleEditPedido = (pedido: PedidoComId) => {
     setEditingPedido(pedido)
     setFormOpen(true)
+  }
+
+  const handleViewPedido = (pedido: PedidoComId) => {
+    setViewingPedido(pedido)
+    setDetalhesOpen(true)
   }
 
   const handleDeletePedido = (id: number) => {
@@ -255,7 +267,12 @@ const PedidosVenda = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="sm" title="Visualizar">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          title="Visualizar"
+                          onClick={() => handleViewPedido(pedido)}
+                        >
                           <Eye className="h-4 w-4" />
                         </Button>
                         <Button 
@@ -289,6 +306,12 @@ const PedidosVenda = () => {
         onOpenChange={setFormOpen}
         pedido={editingPedido}
         onSave={handleSavePedido}
+      />
+
+      <PedidoVendaDetalhes
+        open={detalhesOpen}
+        onOpenChange={setDetalhesOpen}
+        pedido={viewingPedido}
       />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

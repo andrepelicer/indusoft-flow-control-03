@@ -1,4 +1,3 @@
-
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
@@ -34,8 +33,8 @@ import { ItemPedidoManager } from "./ItemPedidoManager"
 interface PedidoVendaFormProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  pedido?: Pedido & { id: number }
-  onSave: (pedido: Pedido) => void
+  pedido?: (Pedido & { id: number }) & { itens?: ItemPedidoExpandido[] }
+  onSave: (pedido: Pedido & { itens: ItemPedidoExpandido[] }) => void
 }
 
 export function PedidoVendaForm({ open, onOpenChange, pedido, onSave }: PedidoVendaFormProps) {
@@ -60,7 +59,7 @@ export function PedidoVendaForm({ open, onOpenChange, pedido, onSave }: PedidoVe
   useEffect(() => {
     if (pedido) {
       form.reset(pedido)
-      setItens([]) // Em um sistema real, carregaria os itens do pedido
+      setItens(pedido.itens || [])
     } else {
       form.reset({
         numero: `PV-${Date.now()}`,
@@ -93,7 +92,9 @@ export function PedidoVendaForm({ open, onOpenChange, pedido, onSave }: PedidoVe
       return
     }
 
-    onSave(data)
+    // Incluir os itens no pedido ao salvar
+    const pedidoComItens = { ...data, itens }
+    onSave(pedidoComItens)
     toast({
       title: pedido ? "Pedido atualizado" : "Pedido criado",
       description: "As informações foram salvas com sucesso.",
