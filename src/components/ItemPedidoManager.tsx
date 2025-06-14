@@ -25,7 +25,7 @@ const produtosMock = [
 
 export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemPedidoManagerProps) {
   const [novoItem, setNovoItem] = useState<Partial<ItemPedidoExpandido>>({
-    produtoId: 0,
+    produtoId: undefined,
     quantidade: 1,
     precoUnitario: 0,
     desconto: 0
@@ -42,10 +42,17 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
   }
 
   const adicionarItem = () => {
-    if (!novoItem.produtoId || !novoItem.quantidade || !novoItem.precoUnitario) return
+    // Validação melhorada
+    if (!novoItem.produtoId || novoItem.produtoId === 0 || !novoItem.quantidade || novoItem.quantidade <= 0 || !novoItem.precoUnitario || novoItem.precoUnitario <= 0) {
+      console.log('Validação falhou:', novoItem)
+      return
+    }
 
     const produto = produtosMock.find(p => p.id === novoItem.produtoId)
-    if (!produto) return
+    if (!produto) {
+      console.log('Produto não encontrado:', novoItem.produtoId)
+      return
+    }
 
     const itemCompleto: ItemPedidoExpandido = {
       id: Date.now(),
@@ -65,7 +72,7 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
 
     // Reset form
     setNovoItem({
-      produtoId: 0,
+      produtoId: undefined,
       quantidade: 1,
       precoUnitario: 0,
       desconto: 0
@@ -91,11 +98,12 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
     onTotalChange(calcularTotal(novosItens))
   }
 
-  const selecionarProduto = (produtoId: number) => {
-    const produto = produtosMock.find(p => p.id === produtoId)
+  const selecionarProduto = (produtoId: string) => {
+    const id = Number(produtoId)
+    const produto = produtosMock.find(p => p.id === id)
     setNovoItem({
       ...novoItem,
-      produtoId,
+      produtoId: id,
       precoUnitario: produto?.precoVenda || 0
     })
   }
@@ -109,9 +117,9 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
         {/* Formulário para adicionar novo item */}
         <div className="grid grid-cols-1 md:grid-cols-6 gap-2 p-4 border rounded-lg">
           <div>
-            <Select onValueChange={(value) => selecionarProduto(Number(value))}>
+            <Select value={novoItem.produtoId?.toString() || ""} onValueChange={selecionarProduto}>
               <SelectTrigger>
-                <SelectValue placeholder="Produto" />
+                <SelectValue placeholder="Selecione um produto" />
               </SelectTrigger>
               <SelectContent>
                 {produtosMock.map(produto => (
@@ -126,6 +134,7 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
             <Input
               type="number"
               placeholder="Qtd"
+              min="1"
               value={novoItem.quantidade || ''}
               onChange={(e) => setNovoItem({...novoItem, quantidade: Number(e.target.value)})}
             />
@@ -135,6 +144,7 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
               type="number"
               step="0.01"
               placeholder="Preço"
+              min="0"
               value={novoItem.precoUnitario || ''}
               onChange={(e) => setNovoItem({...novoItem, precoUnitario: Number(e.target.value)})}
             />
@@ -144,12 +154,18 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
               type="number"
               step="0.01"
               placeholder="Desc %"
+              min="0"
+              max="100"
               value={novoItem.desconto || ''}
               onChange={(e) => setNovoItem({...novoItem, desconto: Number(e.target.value)})}
             />
           </div>
           <div className="md:col-span-2">
-            <Button onClick={adicionarItem} className="w-full">
+            <Button 
+              onClick={adicionarItem} 
+              className="w-full"
+              disabled={!novoItem.produtoId || !novoItem.quantidade || !novoItem.precoUnitario}
+            >
               <Plus className="h-4 w-4 mr-2" />
               Adicionar
             </Button>
@@ -181,6 +197,7 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
                   <TableCell>
                     <Input
                       type="number"
+                      min="1"
                       value={item.quantidade}
                       onChange={(e) => atualizarItem(item.id!, 'quantidade', Number(e.target.value))}
                       className="w-20"
@@ -190,6 +207,7 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
                     <Input
                       type="number"
                       step="0.01"
+                      min="0"
                       value={item.precoUnitario}
                       onChange={(e) => atualizarItem(item.id!, 'precoUnitario', Number(e.target.value))}
                       className="w-24"
@@ -199,6 +217,8 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
                     <Input
                       type="number"
                       step="0.01"
+                      min="0"
+                      max="100"
                       value={item.desconto || 0}
                       onChange={(e) => atualizarItem(item.id!, 'desconto', Number(e.target.value))}
                       className="w-20"
@@ -225,6 +245,12 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
               </TableRow>
             </TableBody>
           </Table>
+        )}
+
+        {itens.length === 0 && (
+          <div className="text-center py-8 text-muted-foreground">
+            Nenhum item adicionado ao pedido
+          </div>
         )}
       </CardContent>
     </Card>
