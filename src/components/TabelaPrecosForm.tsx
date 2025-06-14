@@ -1,4 +1,3 @@
-
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
@@ -22,6 +21,7 @@ import {
 } from "@/components/ui/form"
 import { tabelaPrecoSchema, type TabelaPreco } from "@/lib/validations"
 import { useToast } from "@/hooks/use-toast"
+import { useEffect } from "react"
 
 interface TabelaPrecosFormProps {
   open: boolean
@@ -35,7 +35,7 @@ export function TabelaPrecosForm({ open, onOpenChange, tabela, onSave }: TabelaP
   
   const form = useForm<TabelaPreco>({
     resolver: zodResolver(tabelaPrecoSchema),
-    defaultValues: tabela || {
+    defaultValues: {
       nome: "",
       descricao: "",
       ativa: true,
@@ -44,6 +44,22 @@ export function TabelaPrecosForm({ open, onOpenChange, tabela, onSave }: TabelaP
     }
   })
 
+  useEffect(() => {
+    if (open) {
+      if (tabela) {
+        form.reset(tabela)
+      } else {
+        form.reset({
+          nome: "",
+          descricao: "",
+          ativa: true,
+          dataInicio: new Date().toISOString().split('T')[0],
+          dataFim: ""
+        })
+      }
+    }
+  }, [tabela, form, open])
+
   const onSubmit = (data: TabelaPreco) => {
     onSave(data)
     toast({
@@ -51,11 +67,15 @@ export function TabelaPrecosForm({ open, onOpenChange, tabela, onSave }: TabelaP
       description: "As informações foram salvas com sucesso.",
     })
     onOpenChange(false)
+  }
+
+  const handleClose = () => {
     form.reset()
+    onOpenChange(false)
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>
@@ -150,7 +170,7 @@ export function TabelaPrecosForm({ open, onOpenChange, tabela, onSave }: TabelaP
             />
 
             <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button type="button" variant="outline" onClick={handleClose}>
                 Cancelar
               </Button>
               <Button type="submit">

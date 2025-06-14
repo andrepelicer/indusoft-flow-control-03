@@ -1,4 +1,3 @@
-
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/AppSidebar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -109,6 +108,11 @@ const Fornecedores = () => {
     setFornecedorToDelete(null)
   }
 
+  const handleNewFornecedor = () => {
+    setEditingFornecedor(undefined)
+    setFormOpen(true)
+  }
+
   const renderStars = (rating: number) => {
     return [...Array(5)].map((_, i) => (
       <Star 
@@ -139,7 +143,7 @@ const Fornecedores = () => {
                 <h2 className="text-2xl font-bold">Gestão de Fornecedores</h2>
                 <p className="text-muted-foreground">Cadastro e avaliação de fornecedores por categoria</p>
               </div>
-              <Button onClick={() => setFormOpen(true)}>
+              <Button onClick={handleNewFornecedor}>
                 <Plus className="h-4 w-4 mr-2" />
                 Novo Fornecedor
               </Button>

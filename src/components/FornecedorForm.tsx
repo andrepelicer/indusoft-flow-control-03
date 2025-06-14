@@ -1,4 +1,3 @@
-
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
@@ -54,21 +53,23 @@ export function FornecedorForm({ open, onOpenChange, fornecedor, onSave }: Forne
   })
 
   useEffect(() => {
-    if (fornecedor) {
-      form.reset(fornecedor)
-    } else {
-      form.reset({
-        nome: "",
-        cnpj: "",
-        categoria: "",
-        email: "",
-        telefone: "",
-        cidade: "",
-        avaliacao: 5,
-        status: "Ativo"
-      })
+    if (open) {
+      if (fornecedor) {
+        form.reset(fornecedor)
+      } else {
+        form.reset({
+          nome: "",
+          cnpj: "",
+          categoria: "",
+          email: "",
+          telefone: "",
+          cidade: "",
+          avaliacao: 5,
+          status: "Ativo"
+        })
+      }
     }
-  }, [fornecedor, form])
+  }, [fornecedor, form, open])
 
   const onSubmit = (data: Fornecedor) => {
     onSave(data)
@@ -79,8 +80,13 @@ export function FornecedorForm({ open, onOpenChange, fornecedor, onSave }: Forne
     onOpenChange(false)
   }
 
+  const handleClose = () => {
+    form.reset()
+    onOpenChange(false)
+  }
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>
@@ -233,7 +239,7 @@ export function FornecedorForm({ open, onOpenChange, fornecedor, onSave }: Forne
             </div>
 
             <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button type="button" variant="outline" onClick={handleClose}>
                 Cancelar
               </Button>
               <Button type="submit">

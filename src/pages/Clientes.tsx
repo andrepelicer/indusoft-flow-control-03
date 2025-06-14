@@ -1,4 +1,3 @@
-
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/AppSidebar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -108,6 +107,11 @@ const Clientes = () => {
     setClienteToDelete(null)
   }
 
+  const handleNewCliente = () => {
+    setEditingCliente(undefined)
+    setFormOpen(true)
+  }
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
@@ -127,7 +131,7 @@ const Clientes = () => {
                 <h2 className="text-2xl font-bold">Gestão de Clientes</h2>
                 <p className="text-muted-foreground">Cadastro de pessoas físicas e jurídicas</p>
               </div>
-              <Button onClick={() => setFormOpen(true)}>
+              <Button onClick={handleNewCliente}>
                 <Plus className="h-4 w-4 mr-2" />
                 Novo Cliente
               </Button>

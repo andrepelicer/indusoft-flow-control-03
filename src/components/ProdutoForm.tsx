@@ -1,4 +1,3 @@
-
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
@@ -57,23 +56,25 @@ export function ProdutoForm({ open, onOpenChange, produto, onSave }: ProdutoForm
   })
 
   useEffect(() => {
-    if (produto) {
-      form.reset(produto)
-    } else {
-      form.reset({
-        codigo: "",
-        nome: "",
-        categoria: "",
-        unidade: "",
-        precoVenda: 0,
-        custoProducao: 0,
-        estoque: 0,
-        estoqueMinimo: 0,
-        status: "Ativo",
-        temFichaTecnica: false
-      })
+    if (open) {
+      if (produto) {
+        form.reset(produto)
+      } else {
+        form.reset({
+          codigo: "",
+          nome: "",
+          categoria: "",
+          unidade: "",
+          precoVenda: 0,
+          custoProducao: 0,
+          estoque: 0,
+          estoqueMinimo: 0,
+          status: "Ativo",
+          temFichaTecnica: false
+        })
+      }
     }
-  }, [produto, form])
+  }, [produto, form, open])
 
   const onSubmit = (data: Produto) => {
     onSave(data)
@@ -84,8 +85,13 @@ export function ProdutoForm({ open, onOpenChange, produto, onSave }: ProdutoForm
     onOpenChange(false)
   }
 
+  const handleClose = () => {
+    form.reset()
+    onOpenChange(false)
+  }
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
@@ -299,7 +305,7 @@ export function ProdutoForm({ open, onOpenChange, produto, onSave }: ProdutoForm
             </div>
 
             <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button type="button" variant="outline" onClick={handleClose}>
                 Cancelar
               </Button>
               <Button type="submit">

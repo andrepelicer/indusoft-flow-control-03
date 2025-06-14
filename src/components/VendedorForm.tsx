@@ -1,4 +1,3 @@
-
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
@@ -53,20 +52,22 @@ export function VendedorForm({ open, onOpenChange, vendedor, onSave }: VendedorF
   })
 
   useEffect(() => {
-    if (vendedor) {
-      form.reset(vendedor)
-    } else {
-      form.reset({
-        nome: "",
-        cpf: "",
-        email: "",
-        telefone: "",
-        comissao: 5,
-        status: "Ativo",
-        dataAdmissao: new Date().toISOString().split('T')[0]
-      })
+    if (open) {
+      if (vendedor) {
+        form.reset(vendedor)
+      } else {
+        form.reset({
+          nome: "",
+          cpf: "",
+          email: "",
+          telefone: "",
+          comissao: 5,
+          status: "Ativo",
+          dataAdmissao: new Date().toISOString().split('T')[0]
+        })
+      }
     }
-  }, [vendedor, form])
+  }, [vendedor, form, open])
 
   const onSubmit = (data: Vendedor) => {
     onSave(data)
@@ -77,8 +78,13 @@ export function VendedorForm({ open, onOpenChange, vendedor, onSave }: VendedorF
     onOpenChange(false)
   }
 
+  const handleClose = () => {
+    form.reset()
+    onOpenChange(false)
+  }
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>
@@ -210,7 +216,7 @@ export function VendedorForm({ open, onOpenChange, vendedor, onSave }: VendedorF
             </div>
 
             <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button type="button" variant="outline" onClick={handleClose}>
                 Cancelar
               </Button>
               <Button type="submit">
