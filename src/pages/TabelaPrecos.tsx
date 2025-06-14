@@ -28,8 +28,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
-import { SidebarProvider } from "@/components/ui/sidebar"
-import { AppSidebar } from "@/components/AppSidebar"
 import { TabelaPrecosForm } from "@/components/TabelaPrecosForm"
 import { useToast } from "@/hooks/use-toast"
 import { Search, Plus, Edit, Trash2, DollarSign, Package } from "lucide-react"
@@ -117,141 +115,140 @@ export default function TabelaPrecos() {
   }
 
   return (
-    <SidebarProvider>
-      <AppSidebar />
-      <main className="flex-1 p-6">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Tabela de Preços</h1>
-          <p className="text-gray-600">Gerencie as tabelas de preços dos produtos</p>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold">Tabela de Preços</h2>
+          <p className="text-muted-foreground">Gerencie as tabelas de preços dos produtos</p>
         </div>
+      </div>
 
-        <Card>
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="h-5 w-5" />
-                  Lista de Tabelas de Preços
-                </CardTitle>
-                <CardDescription>
-                  {tabelas.length} tabela(s) cadastrada(s)
-                </CardDescription>
-              </div>
-              <Button onClick={() => {
-                setSelectedTabela(undefined)
-                setIsFormOpen(true)
-              }}>
-                <Plus className="h-4 w-4 mr-2" />
-                Nova Tabela
-              </Button>
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <DollarSign className="h-5 w-5" />
+                Lista de Tabelas de Preços
+              </CardTitle>
+              <CardDescription>
+                {tabelas.length} tabela(s) cadastrada(s)
+              </CardDescription>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="mb-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Buscar por nome ou descrição..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+            <Button onClick={() => {
+              setSelectedTabela(undefined)
+              setIsFormOpen(true)
+            }}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nova Tabela
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="mb-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Buscar por nome ou descrição..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
             </div>
+          </div>
 
-            <div className="border rounded-md">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Descrição</TableHead>
-                    <TableHead>Período</TableHead>
-                    <TableHead>Itens</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Ações</TableHead>
+          <div className="border rounded-md overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead className="hidden md:table-cell">Descrição</TableHead>
+                  <TableHead>Período</TableHead>
+                  <TableHead>Itens</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredTabelas.map((tabela) => (
+                  <TableRow key={tabela.id}>
+                    <TableCell className="font-medium">{tabela.nome}</TableCell>
+                    <TableCell className="hidden md:table-cell">{tabela.descricao || "-"}</TableCell>
+                    <TableCell>
+                      <div className="text-sm">
+                        <div>{formatDate(tabela.dataInicio)}</div>
+                        {tabela.dataFim && (
+                          <div className="text-gray-500 hidden sm:block">até {formatDate(tabela.dataFim)}</div>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Package className="h-4 w-4" />
+                        {tabela.itens?.length || 0}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={tabela.ativa ? "default" : "secondary"}>
+                        {tabela.ativa ? "Ativa" : "Inativa"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditTabela(tabela)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteTabela(tabela)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredTabelas.map((tabela) => (
-                    <TableRow key={tabela.id}>
-                      <TableCell className="font-medium">{tabela.nome}</TableCell>
-                      <TableCell>{tabela.descricao || "-"}</TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          <div>{formatDate(tabela.dataInicio)}</div>
-                          {tabela.dataFim && (
-                            <div className="text-gray-500">até {formatDate(tabela.dataFim)}</div>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Package className="h-4 w-4" />
-                          {tabela.itens?.length || 0} produtos
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={tabela.ativa ? "default" : "secondary"}>
-                          {tabela.ativa ? "Ativa" : "Inativa"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEditTabela(tabela)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDeleteTabela(tabela)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          {filteredTabelas.length === 0 && (
+            <div className="text-center py-8 text-gray-500">
+              Nenhuma tabela encontrada.
             </div>
+          )}
+        </CardContent>
+      </Card>
 
-            {filteredTabelas.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                Nenhuma tabela encontrada.
-              </div>
-            )}
-          </CardContent>
-        </Card>
+      <TabelaPrecosForm
+        open={isFormOpen}
+        onOpenChange={setIsFormOpen}
+        tabela={selectedTabela}
+        onSave={handleSaveTabela}
+      />
 
-        <TabelaPrecosForm
-          open={isFormOpen}
-          onOpenChange={setIsFormOpen}
-          tabela={selectedTabela}
-          onSave={handleSaveTabela}
-        />
-
-        <AlertDialog open={!!tabelaToDelete} onOpenChange={() => setTabelaToDelete(null)}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-              <AlertDialogDescription>
-                Tem certeza que deseja excluir a tabela "{tabelaToDelete?.nome}"? 
-                Esta ação não pode ser desfeita.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={confirmDelete}>
-                Excluir
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </main>
-    </SidebarProvider>
+      <AlertDialog open={!!tabelaToDelete} onOpenChange={() => setTabelaToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir a tabela "{tabelaToDelete?.nome}"? 
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
   )
 }

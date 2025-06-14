@@ -1,6 +1,4 @@
 
-import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar"
-import { AppSidebar } from "@/components/AppSidebar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -142,158 +140,148 @@ const Orcamentos = () => {
   }
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
-        <AppSidebar />
-        <SidebarInset className="flex-1">
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b border-border px-4">
-            <SidebarTrigger className="-ml-1" />
-            <div className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              <h1 className="text-lg font-semibold">Orçamentos</h1>
-            </div>
-          </header>
-          
-          <main className="flex-1 p-6">
-            <div className="flex justify-between items-center mb-6">
-              <div>
-                <h2 className="text-2xl font-bold">Gestão de Orçamentos</h2>
-                <p className="text-muted-foreground">Controle de propostas e negociações</p>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline">
-                  <Clock className="h-4 w-4 mr-2" />
-                  Pendentes ({orcamentosPendentes.length})
-                </Button>
-                <Button onClick={() => setFormOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Novo Orçamento
-                </Button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-              <Card>
-                <CardContent className="p-4">
-                  <div className="text-2xl font-bold text-primary">{orcamentos.length}</div>
-                  <div className="text-sm text-muted-foreground">Total Orçamentos</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <div className="text-2xl font-bold text-yellow-600">{orcamentosPendentes.length}</div>
-                  <div className="text-sm text-muted-foreground">Pendentes</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <div className="text-2xl font-bold text-green-600">{orcamentosAprovados.length}</div>
-                  <div className="text-sm text-muted-foreground">Aprovados</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <div className="text-2xl font-bold text-blue-600">
-                    R$ {(valorTotalOrcamentos / 1000).toFixed(0)}k
-                  </div>
-                  <div className="text-sm text-muted-foreground">Valor Total</div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle>Filtros</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex gap-4">
-                  <div className="flex-1">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                      <Input
-                        placeholder="Buscar por número ou cliente..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-                  </div>
-                  <Button variant="outline">Por Status</Button>
-                  <Button variant="outline">Por Vendedor</Button>
-                  <Button variant="outline">Por Período</Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Lista de Orçamentos</CardTitle>
-                <CardDescription>
-                  {filteredOrcamentos.length} orçamento(s) encontrado(s)
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Número</TableHead>
-                      <TableHead>Cliente</TableHead>
-                      <TableHead>Vendedor</TableHead>
-                      <TableHead>Data</TableHead>
-                      <TableHead>Validade</TableHead>
-                      <TableHead>Valor Total</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredOrcamentos.map((orcamento) => (
-                      <TableRow key={orcamento.id}>
-                        <TableCell className="font-mono text-sm font-medium">{orcamento.numero}</TableCell>
-                        <TableCell className="font-medium">
-                          {clienteNomes[orcamento.clienteId as keyof typeof clienteNomes]}
-                        </TableCell>
-                        <TableCell>
-                          {vendedorNomes[orcamento.vendedorId as keyof typeof vendedorNomes]}
-                        </TableCell>
-                        <TableCell>{new Date(orcamento.dataOrcamento).toLocaleDateString()}</TableCell>
-                        <TableCell>{new Date(orcamento.validadeOrcamento).toLocaleDateString()}</TableCell>
-                        <TableCell>R$ {orcamento.valorTotal.toFixed(2)}</TableCell>
-                        <TableCell>
-                          {getStatusBadge(orcamento.status)}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button variant="ghost" size="sm" title="Visualizar">
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              title="Editar"
-                              onClick={() => handleEditOrcamento(orcamento)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              title="Excluir"
-                              onClick={() => handleDeleteOrcamento(orcamento.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </main>
-        </SidebarInset>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center flex-wrap gap-4">
+        <div>
+          <h2 className="text-2xl font-bold">Orçamentos</h2>
+          <p className="text-muted-foreground">Controle de propostas e negociações</p>
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" size="sm">
+            <Clock className="h-4 w-4 mr-2" />
+            Pendentes ({orcamentosPendentes.length})
+          </Button>
+          <Button onClick={() => setFormOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Orçamento
+          </Button>
+        </div>
       </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-primary">{orcamentos.length}</div>
+            <div className="text-sm text-muted-foreground">Total Orçamentos</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-yellow-600">{orcamentosPendentes.length}</div>
+            <div className="text-sm text-muted-foreground">Pendentes</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-green-600">{orcamentosAprovados.length}</div>
+            <div className="text-sm text-muted-foreground">Aprovados</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-blue-600">
+              R$ {(valorTotalOrcamentos / 1000).toFixed(0)}k
+            </div>
+            <div className="text-sm text-muted-foreground">Valor Total</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Filtros</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-4 flex-wrap">
+            <div className="flex-1 min-w-[250px]">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  placeholder="Buscar por número ou cliente..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <Button variant="outline" size="sm">Por Status</Button>
+            <Button variant="outline" size="sm">Por Vendedor</Button>
+            <Button variant="outline" size="sm">Por Período</Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            Lista de Orçamentos
+          </CardTitle>
+          <CardDescription>
+            {filteredOrcamentos.length} orçamento(s) encontrado(s)
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Número</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead className="hidden lg:table-cell">Vendedor</TableHead>
+                  <TableHead className="hidden md:table-cell">Data</TableHead>
+                  <TableHead className="hidden lg:table-cell">Validade</TableHead>
+                  <TableHead>Valor Total</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredOrcamentos.map((orcamento) => (
+                  <TableRow key={orcamento.id}>
+                    <TableCell className="font-mono text-sm font-medium">{orcamento.numero}</TableCell>
+                    <TableCell className="font-medium">
+                      {clienteNomes[orcamento.clienteId as keyof typeof clienteNomes]}
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell">
+                      {vendedorNomes[orcamento.vendedorId as keyof typeof vendedorNomes]}
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">{new Date(orcamento.dataOrcamento).toLocaleDateString()}</TableCell>
+                    <TableCell className="hidden lg:table-cell">{new Date(orcamento.validadeOrcamento).toLocaleDateString()}</TableCell>
+                    <TableCell>R$ {orcamento.valorTotal.toFixed(2)}</TableCell>
+                    <TableCell>
+                      {getStatusBadge(orcamento.status)}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="sm" title="Visualizar">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          title="Editar"
+                          onClick={() => handleEditOrcamento(orcamento)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          title="Excluir"
+                          onClick={() => handleDeleteOrcamento(orcamento.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
 
       <OrcamentoForm
         open={formOpen}
@@ -316,7 +304,7 @@ const Orcamentos = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </SidebarProvider>
+    </div>
   )
 }
 

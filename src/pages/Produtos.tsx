@@ -1,6 +1,4 @@
 
-import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar"
-import { AppSidebar } from "@/components/AppSidebar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -131,177 +129,167 @@ const Produtos = () => {
   }
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
-        <AppSidebar />
-        <SidebarInset className="flex-1">
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b border-border px-4">
-            <SidebarTrigger className="-ml-1" />
-            <div className="flex items-center gap-2">
-              <Package className="h-5 w-5" />
-              <h1 className="text-lg font-semibold">Produtos</h1>
-            </div>
-          </header>
-          
-          <main className="flex-1 p-6">
-            <div className="flex justify-between items-center mb-6">
-              <div>
-                <h2 className="text-2xl font-bold">Gestão de Produtos</h2>
-                <p className="text-muted-foreground">Cadastro com ficha técnica e controle de estoque</p>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline">
-                  <AlertTriangle className="h-4 w-4 mr-2" />
-                  Baixo Estoque ({produtosBaixoEstoque.length})
-                </Button>
-                <Button onClick={() => setFormOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Novo Produto
-                </Button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-              <Card>
-                <CardContent className="p-4">
-                  <div className="text-2xl font-bold text-primary">{produtos.length}</div>
-                  <div className="text-sm text-muted-foreground">Total Produtos</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <div className="text-2xl font-bold text-green-600">
-                    {produtos.filter(p => p.status === 'Ativo').length}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Ativos</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <div className="text-2xl font-bold text-red-600">{produtosBaixoEstoque.length}</div>
-                  <div className="text-sm text-muted-foreground">Baixo Estoque</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <div className="text-2xl font-bold text-blue-600">
-                    R$ {(valorTotalEstoque / 1000).toFixed(0)}k
-                  </div>
-                  <div className="text-sm text-muted-foreground">Valor Total Estoque</div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle>Filtros</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex gap-4">
-                  <div className="flex-1">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                      <Input
-                        placeholder="Buscar por nome, código ou categoria..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-                  </div>
-                  <Button variant="outline">Por Categoria</Button>
-                  <Button variant="outline">Com Ficha Técnica</Button>
-                  <Button variant="outline">Baixo Estoque</Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Lista de Produtos</CardTitle>
-                <CardDescription>
-                  {filteredProdutos.length} produto(s) encontrado(s)
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Código</TableHead>
-                      <TableHead>Nome</TableHead>
-                      <TableHead>Categoria</TableHead>
-                      <TableHead>Preço Venda</TableHead>
-                      <TableHead>Custo</TableHead>
-                      <TableHead>Estoque</TableHead>
-                      <TableHead>Ficha Técnica</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredProdutos.map((produto) => (
-                      <TableRow key={produto.id}>
-                        <TableCell className="font-mono text-sm font-medium">{produto.codigo}</TableCell>
-                        <TableCell className="font-medium">{produto.nome}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{produto.categoria}</Badge>
-                        </TableCell>
-                        <TableCell>R$ {produto.precoVenda.toFixed(2)}</TableCell>
-                        <TableCell>R$ {produto.custoProducao.toFixed(2)}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <span className={produto.estoque <= produto.estoqueMinimo ? 'text-red-600 font-semibold' : ''}>
-                              {produto.estoque} {produto.unidade}
-                            </span>
-                            {produto.estoque <= produto.estoqueMinimo && (
-                              <AlertTriangle className="h-4 w-4 text-red-500" />
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {produto.temFichaTecnica ? (
-                            <Badge variant="default">Sim</Badge>
-                          ) : (
-                            <Badge variant="secondary">Não</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={produto.status === 'Ativo' ? 'default' : 'secondary'}>
-                            {produto.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button variant="ghost" size="sm" title="Visualizar">
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              title="Editar"
-                              onClick={() => handleEditProduto(produto)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              title="Excluir"
-                              onClick={() => handleDeleteProduto(produto.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </main>
-        </SidebarInset>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center flex-wrap gap-4">
+        <div>
+          <h2 className="text-2xl font-bold">Produtos</h2>
+          <p className="text-muted-foreground">Cadastro com ficha técnica e controle de estoque</p>
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" size="sm">
+            <AlertTriangle className="h-4 w-4 mr-2" />
+            Baixo Estoque ({produtosBaixoEstoque.length})
+          </Button>
+          <Button onClick={() => setFormOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Produto
+          </Button>
+        </div>
       </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-primary">{produtos.length}</div>
+            <div className="text-sm text-muted-foreground">Total Produtos</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-green-600">
+              {produtos.filter(p => p.status === 'Ativo').length}
+            </div>
+            <div className="text-sm text-muted-foreground">Ativos</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-red-600">{produtosBaixoEstoque.length}</div>
+            <div className="text-sm text-muted-foreground">Baixo Estoque</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-blue-600">
+              R$ {(valorTotalEstoque / 1000).toFixed(0)}k
+            </div>
+            <div className="text-sm text-muted-foreground">Valor Total Estoque</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Filtros</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-4 flex-wrap">
+            <div className="flex-1 min-w-[250px]">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  placeholder="Buscar por nome, código ou categoria..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <Button variant="outline" size="sm">Por Categoria</Button>
+            <Button variant="outline" size="sm">Com Ficha Técnica</Button>
+            <Button variant="outline" size="sm">Baixo Estoque</Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Package className="h-5 w-5" />
+            Lista de Produtos
+          </CardTitle>
+          <CardDescription>
+            {filteredProdutos.length} produto(s) encontrado(s)
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Código</TableHead>
+                  <TableHead>Nome</TableHead>
+                  <TableHead className="hidden md:table-cell">Categoria</TableHead>
+                  <TableHead>Preço Venda</TableHead>
+                  <TableHead className="hidden lg:table-cell">Custo</TableHead>
+                  <TableHead>Estoque</TableHead>
+                  <TableHead className="hidden lg:table-cell">Ficha Técnica</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredProdutos.map((produto) => (
+                  <TableRow key={produto.id}>
+                    <TableCell className="font-mono text-sm font-medium">{produto.codigo}</TableCell>
+                    <TableCell className="font-medium">{produto.nome}</TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <Badge variant="outline">{produto.categoria}</Badge>
+                    </TableCell>
+                    <TableCell>R$ {produto.precoVenda.toFixed(2)}</TableCell>
+                    <TableCell className="hidden lg:table-cell">R$ {produto.custoProducao.toFixed(2)}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <span className={produto.estoque <= produto.estoqueMinimo ? 'text-red-600 font-semibold' : ''}>
+                          {produto.estoque} {produto.unidade}
+                        </span>
+                        {produto.estoque <= produto.estoqueMinimo && (
+                          <AlertTriangle className="h-4 w-4 text-red-500" />
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell">
+                      {produto.temFichaTecnica ? (
+                        <Badge variant="default">Sim</Badge>
+                      ) : (
+                        <Badge variant="secondary">Não</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={produto.status === 'Ativo' ? 'default' : 'secondary'}>
+                        {produto.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="sm" title="Visualizar">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          title="Editar"
+                          onClick={() => handleEditProduto(produto)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          title="Excluir"
+                          onClick={() => handleDeleteProduto(produto.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
 
       <ProdutoForm
         open={formOpen}
@@ -324,7 +312,7 @@ const Produtos = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </SidebarProvider>
+    </div>
   )
 }
 
