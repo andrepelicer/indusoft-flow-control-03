@@ -41,7 +41,6 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
   })
   const [searchTerm, setSearchTerm] = useState("")
   const [showDropdown, setShowDropdown] = useState(false)
-  const [itensComOP, setItensComOP] = useState<Set<number>>(new Set())
 
   const calcularSubtotal = (item: ItemPedidoExpandido) => {
     const subtotal = item.quantidade * item.precoUnitario
@@ -54,8 +53,15 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
   }
 
   const adicionarItem = () => {
+    console.log('Tentando adicionar item:', novoItem)
+    
     if (!novoItem.produtoId || novoItem.produtoId === 0 || !novoItem.quantidade || novoItem.quantidade <= 0 || !novoItem.precoUnitario || novoItem.precoUnitario <= 0) {
       console.log('Validação falhou:', novoItem)
+      toast({
+        title: "Erro",
+        description: "Preencha todos os campos obrigatórios.",
+        variant: "destructive"
+      })
       return
     }
 
@@ -78,6 +84,8 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
     itemCompleto.subtotal = calcularSubtotal(itemCompleto)
 
     const novosItens = [...itens, itemCompleto]
+    console.log('Adicionando item, novos itens:', novosItens)
+    
     onItensChange(novosItens)
     onTotalChange(calcularTotal(novosItens))
 
@@ -90,27 +98,39 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
     })
     setSearchTerm("")
     setShowDropdown(false)
+    
+    toast({
+      title: "Item adicionado",
+      description: `${produto.nome} foi adicionado ao pedido.`,
+    })
   }
 
   const removerItem = (id: number) => {
+    console.log('Removendo item:', id)
+    
+    const item = itens.find(item => item.id === id)
+    if (!item) return
+    
     const novosItens = itens.filter(item => item.id !== id)
     onItensChange(novosItens)
     onTotalChange(calcularTotal(novosItens))
-    // Remove da lista de itens com OP se existir
-    setItensComOP(prev => {
-      const newSet = new Set(prev)
-      newSet.delete(id)
-      return newSet
-    })
     
     // Remove a ordem de produção se existir
-    const ordemExistente = ordens.find(ordem => ordem.produtoId === itens.find(item => item.id === id)?.produtoId)
+    const ordemExistente = ordens.find(ordem => ordem.produtoId === item.produtoId)
     if (ordemExistente) {
+      console.log('Removendo ordem de produção:', ordemExistente.id)
       removerOrdem(ordemExistente.id)
     }
+    
+    toast({
+      title: "Item removido",
+      description: `${item.produto?.nome} foi removido do pedido.`,
+    })
   }
 
   const atualizarItem = (id: number, campo: keyof ItemPedidoExpandido, valor: any) => {
+    console.log('Atualizando item:', id, campo, valor)
+    
     const novosItens = itens.map(item => {
       if (item.id === id) {
         const itemAtualizado = { ...item, [campo]: valor }
@@ -147,10 +167,11 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
   const gerarOrdemProducao = (item: ItemPedidoExpandido) => {
     console.log('Gerando ordem de produção para item:', item)
     
-    if (!item) {
+    if (!item || !item.produto) {
+      console.error('Item ou produto inválido:', item)
       toast({
         title: "Erro",
-        description: "Nenhum item selecionado para gerar ordem de produção.",
+        description: "Item inválido para gerar ordem de produção.",
         variant: "destructive"
       })
       return
@@ -159,35 +180,42 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
     // Verifica se já existe uma ordem para este produto
     const ordemExistente = ordens.find(ordem => ordem.produtoId === item.produtoId)
     if (ordemExistente) {
+      console.log('Ordem já existe:', ordemExistente)
       toast({
         title: "Ordem já existe",
-        description: `Já existe uma ordem de produção para ${item.produto?.nome}.`,
+        description: `Já existe uma ordem de produção para ${item.produto.nome}.`,
         variant: "destructive"
       })
       return
     }
 
-    const novaOrdem = adicionarOrdem({
-      numero: `OP-${Date.now()}`,
-      produtoId: item.produtoId,
-      produto: item.produto?.nome || '',
-      codigo: item.produto?.codigo || '',
-      quantidade: item.quantidade,
-      status: 'Pendente',
-      dataCriacao: new Date().toISOString().split('T')[0],
-      dataPrevisao: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 7 dias a partir de hoje
-      observacoes: `Ordem gerada automaticamente do pedido de venda para ${item.produto?.nome}`
-    })
-    
-    console.log('Ordem de Produção criada:', novaOrdem)
-    
-    // Adiciona o item à lista de itens com OP
-    setItensComOP(prev => new Set(prev).add(item.id!))
-    
-    toast({
-      title: "Ordem de Produção Criada",
-      description: `Ordem ${novaOrdem.numero} criada com sucesso para ${novaOrdem.produto}!`,
-    })
+    try {
+      const novaOrdem = adicionarOrdem({
+        numero: `OP-${Date.now()}`,
+        produtoId: item.produtoId,
+        produto: item.produto.nome,
+        codigo: item.produto.codigo,
+        quantidade: item.quantidade,
+        status: 'Pendente',
+        dataCriacao: new Date().toISOString().split('T')[0],
+        dataPrevisao: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 7 dias a partir de hoje
+        observacoes: `Ordem gerada automaticamente do pedido de venda para ${item.produto.nome}`
+      })
+      
+      console.log('Ordem de Produção criada com sucesso:', novaOrdem)
+      
+      toast({
+        title: "Ordem de Produção Criada",
+        description: `Ordem ${novaOrdem.numero} criada com sucesso para ${novaOrdem.produto}!`,
+      })
+    } catch (error) {
+      console.error('Erro ao criar ordem de produção:', error)
+      toast({
+        title: "Erro",
+        description: "Erro ao criar ordem de produção.",
+        variant: "destructive"
+      })
+    }
   }
 
   const cancelarOrdemProducao = (item: ItemPedidoExpandido) => {
@@ -196,20 +224,21 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
     // Encontra e remove a ordem de produção
     const ordemExistente = ordens.find(ordem => ordem.produtoId === item.produtoId)
     if (ordemExistente) {
+      console.log('Removendo ordem existente:', ordemExistente.id)
       removerOrdem(ordemExistente.id)
+      
+      toast({
+        title: "Ordem de Produção Cancelada",
+        description: `Ordem de produção cancelada para ${item.produto?.nome}!`,
+      })
+    } else {
+      console.log('Nenhuma ordem encontrada para cancelar')
+      toast({
+        title: "Aviso",
+        description: "Nenhuma ordem de produção encontrada para este item.",
+        variant: "destructive"
+      })
     }
-    
-    // Remove o item da lista de itens com OP
-    setItensComOP(prev => {
-      const newSet = new Set(prev)
-      newSet.delete(item.id!)
-      return newSet
-    })
-    
-    toast({
-      title: "Ordem de Produção Cancelada",
-      description: `Ordem de produção cancelada para ${item.produto?.nome}!`,
-    })
   }
 
   const produtosFiltrados = produtosMock.filter(produto =>
@@ -221,8 +250,12 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
 
   // Verifica se um item tem ordem de produção baseado na lista global de ordens
   const itemTemOrdemProducao = (item: ItemPedidoExpandido) => {
-    return ordens.some(ordem => ordem.produtoId === item.produtoId)
+    const temOrdem = ordens.some(ordem => ordem.produtoId === item.produtoId)
+    console.log(`Item ${item.produto?.nome} tem ordem:`, temOrdem)
+    return temOrdem
   }
+
+  console.log('Estado atual - Itens:', itens.length, 'Ordens:', ordens.length)
 
   return (
     <Card>

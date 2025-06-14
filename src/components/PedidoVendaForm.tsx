@@ -1,3 +1,4 @@
+
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
@@ -27,7 +28,7 @@ import {
 } from "@/components/ui/select"
 import { pedidoSchema, type Pedido, ItemPedidoExpandido } from "@/lib/validations"
 import { useToast } from "@/hooks/use-toast"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { ItemPedidoManager } from "./ItemPedidoManager"
 
 interface PedidoVendaFormProps {
@@ -58,6 +59,7 @@ export function PedidoVendaForm({ open, onOpenChange, pedido, onSave }: PedidoVe
 
   useEffect(() => {
     if (pedido) {
+      console.log('Carregando pedido para edição:', pedido)
       form.reset(pedido)
       setItens(pedido.itens || [])
     } else {
@@ -76,13 +78,23 @@ export function PedidoVendaForm({ open, onOpenChange, pedido, onSave }: PedidoVe
     }
   }, [pedido, form])
 
-  const handleTotalChange = (novoTotal: number) => {
+  const handleTotalChange = useCallback((novoTotal: number) => {
+    console.log('Atualizando total:', novoTotal)
     const desconto = form.getValues('desconto') || 0
     const totalComDesconto = novoTotal * (1 - desconto / 100)
     form.setValue('valorTotal', totalComDesconto)
-  }
+  }, [form])
+
+  const handleDescontoChange = useCallback((desconto: number) => {
+    console.log('Atualizando desconto:', desconto)
+    const totalItens = itens.reduce((sum, item) => sum + (item.subtotal || 0), 0)
+    const totalComDesconto = totalItens * (1 - desconto / 100)
+    form.setValue('valorTotal', totalComDesconto)
+  }, [itens, form])
 
   const onSubmit = (data: Pedido) => {
+    console.log('Submetendo pedido com itens:', { data, itens })
+    
     if (itens.length === 0) {
       toast({
         title: "Erro",
@@ -257,7 +269,7 @@ export function PedidoVendaForm({ open, onOpenChange, pedido, onSave }: PedidoVe
                         onChange={(e) => {
                           const value = Number(e.target.value)
                           field.onChange(value)
-                          handleTotalChange(itens.reduce((sum, item) => sum + (item.subtotal || 0), 0))
+                          handleDescontoChange(value)
                         }} 
                       />
                     </FormControl>
