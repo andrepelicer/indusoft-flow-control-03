@@ -1,3 +1,4 @@
+
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -38,8 +39,8 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
   })
   const [searchTerm, setSearchTerm] = useState("")
   const [showDropdown, setShowDropdown] = useState(false)
-  const [ordemProducaoDialog, setOrdemProducaoDialog] = useState(false)
-  const [itemSelecionado, setItemSelecionado] = useState<ItemPedidoExpandido | null>(null)
+  const [ordemProducaoOpen, setOrdemProducaoOpen] = useState(false)
+  const [itemSelecionadoOP, setItemSelecionadoOP] = useState<ItemPedidoExpandido | null>(null)
 
   const calcularSubtotal = (item: ItemPedidoExpandido) => {
     const subtotal = item.quantidade * item.precoUnitario
@@ -130,16 +131,18 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
     setShowDropdown(false)
   }
 
-  const abrirDialogOrdemProducao = (item: ItemPedidoExpandido) => {
-    console.log('Abrindo dialog para ordem de produção:', item)
-    setItemSelecionado(item)
-    setOrdemProducaoDialog(true)
+  const abrirOrdemProducao = (item: ItemPedidoExpandido) => {
+    console.log('Abrindo ordem de produção para item:', item)
+    setItemSelecionadoOP(item)
+    setOrdemProducaoOpen(true)
   }
 
-  const fecharDialogOrdemProducao = () => {
-    console.log('Fechando dialog de ordem de produção')
-    setOrdemProducaoDialog(false)
-    setItemSelecionado(null)
+  const fecharOrdemProducao = (open: boolean) => {
+    console.log('Fechando ordem de produção, novo estado:', open)
+    setOrdemProducaoOpen(open)
+    if (!open) {
+      setItemSelecionadoOP(null)
+    }
   }
 
   const produtosFiltrados = produtosMock.filter(produto =>
@@ -314,7 +317,7 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
                         variant="ghost"
                         size="sm"
                         title="Gerar Ordem de Produção"
-                        onClick={() => abrirDialogOrdemProducao(item)}
+                        onClick={() => abrirOrdemProducao(item)}
                       >
                         <Settings className="h-4 w-4" />
                       </Button>
@@ -345,11 +348,11 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
           </div>
         )}
 
-        {/* Dialog para Ordem de Produção */}
+        {/* Modal para Ordem de Produção */}
         <OrdemProducaoDialog
-          open={ordemProducaoDialog}
-          onOpenChange={setOrdemProducaoDialog}
-          item={itemSelecionado}
+          open={ordemProducaoOpen}
+          onOpenChange={fecharOrdemProducao}
+          item={itemSelecionadoOP}
         />
       </CardContent>
     </Card>
