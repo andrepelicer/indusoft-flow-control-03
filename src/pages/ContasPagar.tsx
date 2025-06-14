@@ -47,6 +47,38 @@ export default function ContasPagar() {
     { id: 5, nome: "Transferência", tipo: "Transferência", ativo: true },
     { id: 6, nome: "Boleto", tipo: "Boleto", ativo: true }
   ])
+
+  // Dados dos fornecedores do sistema
+  const [fornecedores] = useState([
+    {
+      id: 1,
+      cnpj: "12.345.678/0001-90",
+      razaoSocial: "Aços Especiais Ltda",
+      nomeFantasia: "Aços Especiais",
+      ativo: true
+    },
+    {
+      id: 2,
+      cnpj: "98.765.432/0001-10",
+      razaoSocial: "Materiais de Construção Silva & Cia",
+      nomeFantasia: "Silva Materiais",
+      ativo: true
+    },
+    {
+      id: 3,
+      cnpj: "11.222.333/0001-44",
+      razaoSocial: "Transportes Rápidos S.A.",
+      nomeFantasia: "Rápidos",
+      ativo: true
+    },
+    {
+      id: 4,
+      cnpj: "22.333.444/0001-55",
+      razaoSocial: "Energia Elétrica SA",
+      nomeFantasia: "Energia SA",
+      ativo: true
+    }
+  ])
   
   const [contas, setContas] = useState<ContaPagar[]>([
     {
@@ -75,7 +107,7 @@ export default function ContasPagar() {
     },
     {
       id: 3,
-      fornecedor: "Transporte Silva & Cia",
+      fornecedor: "Transportes Rápidos S.A.",
       documento: "NF-002345",
       descricao: "Frete de mercadorias",
       vencimento: "2024-01-20",
@@ -338,6 +370,7 @@ export default function ContasPagar() {
 
       <ContaEdicaoModal
         conta={selectedConta}
+        fornecedores={fornecedores}
         isOpen={isEdicaoModalOpen}
         onClose={() => setIsEdicaoModalOpen(false)}
         onSave={handleSalvarEdicao}

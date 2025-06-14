@@ -13,18 +13,19 @@ interface ContaPagar {
   descricao: string
   vencimento: string
   valor: number
-  status: 'Pendente' | 'Pago' | 'Vencido'
+  status: 'Pendente' | 'Pago' | 'Vencido' | 'Parcial'
   categoria: string
 }
 
 interface ContaEdicaoModalProps {
   conta: ContaPagar | null
+  fornecedores: any[]
   isOpen: boolean
   onClose: () => void
   onSave: (conta: ContaPagar) => void
 }
 
-export function ContaEdicaoModal({ conta, isOpen, onClose, onSave }: ContaEdicaoModalProps) {
+export function ContaEdicaoModal({ conta, fornecedores, isOpen, onClose, onSave }: ContaEdicaoModalProps) {
   const [formData, setFormData] = useState<ContaPagar | null>(null)
 
   useEffect(() => {
@@ -64,11 +65,18 @@ export function ContaEdicaoModal({ conta, isOpen, onClose, onSave }: ContaEdicao
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="fornecedor">Fornecedor</Label>
-              <Input
-                id="fornecedor"
-                value={formData.fornecedor}
-                onChange={(e) => handleChange('fornecedor', e.target.value)}
-              />
+              <Select value={formData.fornecedor} onValueChange={(value) => handleChange('fornecedor', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o fornecedor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {fornecedores.map((fornecedor) => (
+                    <SelectItem key={fornecedor.id} value={fornecedor.razaoSocial}>
+                      {fornecedor.razaoSocial}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="documento">Documento</Label>
@@ -130,6 +138,7 @@ export function ContaEdicaoModal({ conta, isOpen, onClose, onSave }: ContaEdicao
                   <SelectItem value="Pendente">Pendente</SelectItem>
                   <SelectItem value="Pago">Pago</SelectItem>
                   <SelectItem value="Vencido">Vencido</SelectItem>
+                  <SelectItem value="Parcial">Parcial</SelectItem>
                 </SelectContent>
               </Select>
             </div>
