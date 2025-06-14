@@ -31,6 +31,7 @@ const menuItems = [
       { title: "Fornecedores", url: "/fornecedores" },
       { title: "Produtos", url: "/produtos" },
       { title: "Vendedores", url: "/vendedores" },
+      { title: "Meios de Pagamento", url: "/meios-pagamento" },
     ]
   },
   {
