@@ -23,6 +23,7 @@ import ContasPagar from "./pages/ContasPagar";
 import ContaCorrente from "./pages/ContaCorrente";
 import FluxoCaixa from "./pages/FluxoCaixa";
 import MeiosPagamento from "./pages/MeiosPagamento";
+import OrdensProducao from "./pages/OrdensProducao";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -54,14 +55,7 @@ const App = () => (
             <Route path="/conta-corrente" element={<ContaCorrente />} />
             <Route path="/fluxo-caixa" element={<FluxoCaixa />} />
             <Route path="/meios-pagamento" element={<MeiosPagamento />} />
-            <Route path="/ordens-producao" element={
-              <div className="flex items-center justify-center min-h-[400px]">
-                <div className="text-center">
-                  <h2 className="text-2xl font-bold mb-2">Módulo de Ordens de Produção</h2>
-                  <p className="text-muted-foreground">Em desenvolvimento</p>
-                </div>
-              </div>
-            } />
+            <Route path="/ordens-producao" element={<OrdensProducao />} />
             <Route path="/conferencia" element={
               <div className="flex items-center justify-center min-h-[400px]">
                 <div className="text-center">
