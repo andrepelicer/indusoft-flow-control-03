@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -8,8 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Plus, Edit, Eye, Play, Pause, CheckCircle, XCircle, Trash2 } from "lucide-react"
+import { Plus, Edit, Eye, Play, Pause, CheckCircle, XCircle, Trash2, Settings, Check } from "lucide-react"
 import { format } from "date-fns"
+import EtapasProducaoManager from "@/components/EtapasProducaoManager"
 
 interface EtapaProducao {
   id: number
@@ -125,6 +125,10 @@ export default function OrdensProducao() {
   const [isEditing, setIsEditing] = useState(false)
   const [filtroStatus, setFiltroStatus] = useState<string>("Todos")
   const [isDetalhesOpen, setIsDetalhesOpen] = useState(false)
+  const [isEtapasDialogOpen, setIsEtapasDialogOpen] = useState(false)
+  const [isProntoDialogOpen, setIsProntoDialogOpen] = useState(false)
+  const [selectedProduto, setSelectedProduto] = useState<ProdutoOrdem | null>(null)
+  const [dataFinalizacao, setDataFinalizacao] = useState("")
 
   const [novaOrdem, setNovaOrdem] = useState<Partial<OrdemProducao>>({
     numero: "",
@@ -287,6 +291,67 @@ export default function OrdensProducao() {
 
   const getTotalProduzidos = (ordem: OrdemProducao) => {
     return ordem.produtos.reduce((total, produto) => total + produto.quantidadeProduzida, 0)
+  }
+
+  const handleAlterarEtapas = (produto: ProdutoOrdem) => {
+    setSelectedProduto(produto)
+    setIsEtapasDialogOpen(true)
+  }
+
+  const handleMarcarPronto = (produto: ProdutoOrdem) => {
+    setSelectedProduto(produto)
+    setDataFinalizacao("")
+    setIsProntoDialogOpen(true)
+  }
+
+  const confirmarProdutoPronto = () => {
+    if (!selectedProduto || !dataFinalizacao || !selectedOrdem) return
+
+    const novasOrdens = ordens.map(ordem => {
+      if (ordem.id === selectedOrdem.id) {
+        return {
+          ...ordem,
+          produtos: ordem.produtos.map(produto => 
+            produto.id === selectedProduto.id 
+              ? { 
+                  ...produto, 
+                  status: 'Finalizado' as const,
+                  quantidadeProduzida: produto.quantidade,
+                  dataFinalizacaoProduto: dataFinalizacao
+                }
+              : produto
+          )
+        }
+      }
+      return ordem
+    })
+
+    setOrdens(novasOrdens)
+    setSelectedOrdem(novasOrdens.find(o => o.id === selectedOrdem.id) || null)
+    setIsProntoDialogOpen(false)
+    setSelectedProduto(null)
+    setDataFinalizacao("")
+  }
+
+  const updateEtapasProduto = (novasEtapas: any[]) => {
+    if (!selectedProduto || !selectedOrdem) return
+
+    const novasOrdens = ordens.map(ordem => {
+      if (ordem.id === selectedOrdem.id) {
+        return {
+          ...ordem,
+          produtos: ordem.produtos.map(produto => 
+            produto.id === selectedProduto.id 
+              ? { ...produto, etapas: novasEtapas }
+              : produto
+          )
+        }
+      }
+      return ordem
+    })
+
+    setOrdens(novasOrdens)
+    setSelectedOrdem(novasOrdens.find(o => o.id === selectedOrdem.id) || null)
   }
 
   return (
@@ -736,9 +801,29 @@ export default function OrdensProducao() {
                           <CardTitle className="text-base">{produto.nomeProduto}</CardTitle>
                           <CardDescription>{produto.codigoProduto}</CardDescription>
                         </div>
-                        <Badge className={getStatusColor(produto.status)}>
-                          {produto.status}
-                        </Badge>
+                        <div className="flex items-center space-x-2">
+                          <Badge className={getStatusColor(produto.status)}>
+                            {produto.status}
+                          </Badge>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleAlterarEtapas(produto)}
+                            disabled={produto.status === 'Finalizado'}
+                          >
+                            <Settings className="mr-2 h-4 w-4" />
+                            Alterar Etapas
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleMarcarPronto(produto)}
+                            disabled={produto.status === 'Finalizado'}
+                          >
+                            <Check className="mr-2 h-4 w-4" />
+                            Marcar Pronto
+                          </Button>
+                        </div>
                       </div>
                       <div className="grid grid-cols-3 gap-4 text-sm">
                         <div>
@@ -750,6 +835,11 @@ export default function OrdensProducao() {
                         <div>
                           <strong>Data Previsão:</strong> {format(new Date(produto.dataPrevisaoProduto), 'dd/MM/yyyy')}
                         </div>
+                        {produto.dataFinalizacaoProduto && (
+                          <div>
+                            <strong>Data Finalização:</strong> {format(new Date(produto.dataFinalizacaoProduto), 'dd/MM/yyyy')}
+                          </div>
+                        )}
                       </div>
                     </CardHeader>
                     <CardContent>
@@ -790,6 +880,66 @@ export default function OrdensProducao() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Alterar Etapas */}
+      <Dialog open={isEtapasDialogOpen} onOpenChange={setIsEtapasDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Alterar Etapas - {selectedProduto?.nomeProduto}</DialogTitle>
+            <DialogDescription>
+              Gerencie as etapas de produção do produto
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedProduto && (
+            <EtapasProducaoManager
+              etapas={selectedProduto.etapas}
+              onEtapasChange={updateEtapasProduto}
+              responsaveis={responsaveis}
+              etapasDisponiveis={etapasDisponiveis}
+            />
+          )}
+          
+          <div className="flex justify-end mt-6">
+            <Button onClick={() => setIsEtapasDialogOpen(false)}>
+              Fechar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Marcar Produto Pronto */}
+      <Dialog open={isProntoDialogOpen} onOpenChange={setIsProntoDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Marcar Produto como Pronto</DialogTitle>
+            <DialogDescription>
+              Confirme que o produto {selectedProduto?.nomeProduto} foi finalizado
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="dataFinalizacao">Data de Finalização</Label>
+              <Input
+                id="dataFinalizacao"
+                type="date"
+                value={dataFinalizacao}
+                onChange={(e) => setDataFinalizacao(e.target.value)}
+              />
+            </div>
+          </div>
+          
+          <div className="flex justify-end gap-2 mt-6">
+            <Button variant="outline" onClick={() => setIsProntoDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={confirmarProdutoPronto} disabled={!dataFinalizacao}>
+              Confirmar Finalização
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
