@@ -20,18 +20,26 @@ interface EtapaProducao {
   observacoes?: string
 }
 
+interface EtapaCadastrada {
+  id: number
+  nome: string
+  descricao?: string
+  ordem: number
+  ativo: boolean
+}
+
 interface EtapasProducaoManagerProps {
   etapas: EtapaProducao[]
   onEtapasChange: (etapas: EtapaProducao[]) => void
   responsaveis: string[]
-  etapasDisponiveis: string[]
+  etapasCadastradas: EtapaCadastrada[]
 }
 
 export default function EtapasProducaoManager({ 
   etapas, 
   onEtapasChange, 
   responsaveis, 
-  etapasDisponiveis 
+  etapasCadastradas 
 }: EtapasProducaoManagerProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [novaEtapa, setNovaEtapa] = useState<Partial<EtapaProducao>>({
@@ -40,19 +48,28 @@ export default function EtapasProducaoManager({
     observacoes: ""
   })
 
+  // Filtrar apenas etapas ativas do cadastro
+  const etapasDisponiveis = etapasCadastradas
+    .filter(etapa => etapa.ativo)
+    .sort((a, b) => a.ordem - b.ordem)
+
   const adicionarEtapa = () => {
     if (!novaEtapa.nome || !novaEtapa.responsavel) return
+
+    const etapaCadastrada = etapasCadastradas.find(e => e.nome === novaEtapa.nome)
+    const ordemEtapa = etapaCadastrada ? etapaCadastrada.ordem : etapas.length + 1
 
     const etapa: EtapaProducao = {
       id: Date.now(),
       nome: novaEtapa.nome,
-      ordem: etapas.length + 1,
+      ordem: ordemEtapa,
       concluida: false,
       responsavel: novaEtapa.responsavel,
       observacoes: novaEtapa.observacoes
     }
 
-    onEtapasChange([...etapas, etapa])
+    const novasEtapas = [...etapas, etapa].sort((a, b) => a.ordem - b.ordem)
+    onEtapasChange(novasEtapas)
     setNovaEtapa({ nome: "", responsavel: "", observacoes: "" })
     setIsDialogOpen(false)
   }
@@ -107,12 +124,22 @@ export default function EtapasProducaoManager({
                     </SelectTrigger>
                     <SelectContent>
                       {etapasDisponiveis.map((etapa) => (
-                        <SelectItem key={etapa} value={etapa}>
-                          {etapa}
+                        <SelectItem key={etapa.id} value={etapa.nome}>
+                          {etapa.nome}
+                          {etapa.descricao && (
+                            <span className="text-sm text-muted-foreground ml-2">
+                              - {etapa.descricao}
+                            </span>
+                          )}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                  {etapasDisponiveis.length === 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      Nenhuma etapa cadastrada. Cadastre etapas em "Etapas de Produção".
+                    </p>
+                  )}
                 </div>
                 
                 <div className="space-y-2">
@@ -148,7 +175,7 @@ export default function EtapasProducaoManager({
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Cancelar
                 </Button>
-                <Button onClick={adicionarEtapa}>
+                <Button onClick={adicionarEtapa} disabled={etapasDisponiveis.length === 0}>
                   Adicionar Etapa
                 </Button>
               </div>
@@ -159,53 +186,58 @@ export default function EtapasProducaoManager({
       <CardContent>
         <div className="space-y-2">
           {etapas.length > 0 ? (
-            etapas.map((etapa) => (
-              <div key={etapa.id} className="flex items-center justify-between p-3 border rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => marcarConcluida(etapa.id)}
-                  >
-                    {etapa.concluida ? (
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                    ) : (
-                      <Clock className="h-4 w-4 text-gray-400" />
-                    )}
-                  </Button>
-                  <div className="flex-1">
-                    <div className={`font-medium ${etapa.concluida ? 'line-through text-muted-foreground' : ''}`}>
-                      {etapa.nome}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      Responsável: {etapa.responsavel}
-                      {etapa.dataConclusao && (
-                        <span className="ml-2">
-                          - Concluída em {format(new Date(etapa.dataConclusao), 'dd/MM/yyyy')}
-                        </span>
+            etapas
+              .sort((a, b) => a.ordem - b.ordem)
+              .map((etapa) => (
+                <div key={etapa.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <span className="text-sm text-muted-foreground font-mono">
+                      {etapa.ordem}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => marcarConcluida(etapa.id)}
+                    >
+                      {etapa.concluida ? (
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <Clock className="h-4 w-4 text-gray-400" />
+                      )}
+                    </Button>
+                    <div className="flex-1">
+                      <div className={`font-medium ${etapa.concluida ? 'line-through text-muted-foreground' : ''}`}>
+                        {etapa.nome}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        Responsável: {etapa.responsavel}
+                        {etapa.dataConclusao && (
+                          <span className="ml-2">
+                            - Concluída em {format(new Date(etapa.dataConclusao), 'dd/MM/yyyy')}
+                          </span>
+                        )}
+                      </div>
+                      {etapa.observacoes && (
+                        <div className="text-xs text-muted-foreground">
+                          {etapa.observacoes}
+                        </div>
                       )}
                     </div>
-                    {etapa.observacoes && (
-                      <div className="text-xs text-muted-foreground">
-                        {etapa.observacoes}
-                      </div>
-                    )}
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Badge variant={etapa.concluida ? "default" : "secondary"}>
+                      {etapa.concluida ? "Concluída" : "Pendente"}
+                    </Badge>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => removerEtapa(etapa.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Badge variant={etapa.concluida ? "default" : "secondary"}>
-                    {etapa.concluida ? "Concluída" : "Pendente"}
-                  </Badge>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => removerEtapa(etapa.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            ))
+              ))
           ) : (
             <div className="text-center text-muted-foreground py-4">
               Nenhuma etapa definida

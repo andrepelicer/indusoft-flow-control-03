@@ -60,6 +60,18 @@ const etapasDisponiveis = [
 ]
 
 export default function OrdensProducao() {
+  // Estado para etapas cadastradas
+  const [etapasCadastradas] = useState([
+    { id: 1, nome: "Preparação de Material", descricao: "Separação e preparação dos materiais necessários", ordem: 1, ativo: true },
+    { id: 2, nome: "Corte", descricao: "Corte das peças conforme especificações", ordem: 2, ativo: true },
+    { id: 3, nome: "Usinagem", descricao: "Processo de usinagem das peças", ordem: 3, ativo: true },
+    { id: 4, nome: "Soldagem", descricao: "Soldagem de componentes", ordem: 4, ativo: true },
+    { id: 5, nome: "Montagem", descricao: "Montagem final do produto", ordem: 5, ativo: true },
+    { id: 6, nome: "Acabamento", descricao: "Acabamento e polimento", ordem: 6, ativo: true },
+    { id: 7, nome: "Controle de Qualidade", descricao: "Inspeção e controle de qualidade", ordem: 7, ativo: true },
+    { id: 8, nome: "Embalagem", descricao: "Embalagem do produto final", ordem: 8, ativo: true }
+  ])
+
   const [ordens, setOrdens] = useState<OrdemProducao[]>([
     {
       id: 1,
@@ -898,7 +910,7 @@ export default function OrdensProducao() {
               etapas={selectedProduto.etapas}
               onEtapasChange={updateEtapasProduto}
               responsaveis={responsaveis}
-              etapasDisponiveis={etapasDisponiveis}
+              etapasCadastradas={etapasCadastradas}
             />
           )}
           
