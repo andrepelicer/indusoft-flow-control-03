@@ -37,10 +37,10 @@ const App = () => (
           <Route path="/produtos" element={<Produtos />} />
           <Route path="/vendedores" element={<Vendedores />} />
           <Route path="/tabela-precos" element={<TabelaPrecos />} />
+          <Route path="/orcamentos" element={<Orcamentos />} />
+          <Route path="/pedidos-venda" element={<PedidosVenda />} />
           <Route path="/faturamento" element={<Faturamento />} />
-          {/* Rotas placeholder para próximas fases */}
-          <Route path="/orcamentos" element={<div className="p-8">Módulo de Orçamentos - Em desenvolvimento</div>} />
-          <Route path="/pedidos-venda" element={<div className="p-8">Módulo de Pedidos de Venda - Em desenvolvimento</div>} />
+          {/* Rotas placeholder para módulos ainda não implementados */}
           <Route path="/pedidos-compra" element={<div className="p-8">Módulo de Pedidos de Compra - Em desenvolvimento</div>} />
           <Route path="/contas-receber" element={<div className="p-8">Módulo de Contas a Receber - Em desenvolvimento</div>} />
           <Route path="/contas-pagar" element={<div className="p-8">Módulo de Contas a Pagar - Em desenvolvimento</div>} />
