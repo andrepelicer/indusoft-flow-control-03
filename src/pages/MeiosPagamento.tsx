@@ -7,13 +7,18 @@ import { Plus, Edit, Trash2, CreditCard } from "lucide-react"
 import { MeiosPagamentoForm } from "@/components/MeiosPagamentoForm"
 import { useToast } from "@/hooks/use-toast"
 
+interface Parcela {
+  numeroParcela: number
+  diasVencimento: number
+}
+
 interface MeioPagamento {
   id: number
   nome: string
   tipo: string
   ativo: boolean
   taxaJuros?: number
-  prazoVencimento?: number
+  parcelas: Parcela[]
   dataCriacao: string
 }
 
@@ -28,7 +33,7 @@ export default function MeiosPagamento() {
       tipo: "Dinheiro",
       ativo: true,
       taxaJuros: 0,
-      prazoVencimento: 0,
+      parcelas: [{ numeroParcela: 1, diasVencimento: 0 }],
       dataCriacao: "2024-01-15"
     },
     {
@@ -37,7 +42,7 @@ export default function MeiosPagamento() {
       tipo: "PIX", 
       ativo: true,
       taxaJuros: 0,
-      prazoVencimento: 0,
+      parcelas: [{ numeroParcela: 1, diasVencimento: 0 }],
       dataCriacao: "2024-01-15"
     },
     {
@@ -46,7 +51,11 @@ export default function MeiosPagamento() {
       tipo: "Cartão de Crédito",
       ativo: true,
       taxaJuros: 2.5,
-      prazoVencimento: 30,
+      parcelas: [
+        { numeroParcela: 1, diasVencimento: 30 },
+        { numeroParcela: 2, diasVencimento: 60 },
+        { numeroParcela: 3, diasVencimento: 90 }
+      ],
       dataCriacao: "2024-01-15"
     }
   ])
@@ -141,14 +150,20 @@ export default function MeiosPagamento() {
               <CardDescription>{meio.tipo}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div>
-                  <span className="text-muted-foreground">Taxa de Juros:</span>
-                  <p className="font-medium">{meio.taxaJuros || 0}%</p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Prazo:</span>
-                  <p className="font-medium">{meio.prazoVencimento || 0} dias</p>
+              <div className="text-sm">
+                <span className="text-muted-foreground">Taxa de Juros:</span>
+                <p className="font-medium">{meio.taxaJuros || 0}%</p>
+              </div>
+              
+              <div className="text-sm">
+                <span className="text-muted-foreground">Parcelas:</span>
+                <div className="mt-1 space-y-1">
+                  {meio.parcelas.map((parcela, index) => (
+                    <div key={index} className="flex justify-between text-xs bg-muted p-2 rounded">
+                      <span>Parcela {parcela.numeroParcela}</span>
+                      <span>{parcela.diasVencimento} dias</span>
+                    </div>
+                  ))}
                 </div>
               </div>
               
