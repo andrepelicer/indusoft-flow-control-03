@@ -17,6 +17,8 @@ import TabelaPrecos from "./pages/TabelaPrecos";
 import Orcamentos from "./pages/Orcamentos";
 import PedidosVenda from "./pages/PedidosVenda";
 import Faturamento from "./pages/Faturamento";
+import PedidosCompra from "./pages/PedidosCompra";
+import ContasReceber from "./pages/ContasReceber";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,23 +44,9 @@ const App = () => (
             <Route path="/orcamentos" element={<Orcamentos />} />
             <Route path="/pedidos-venda" element={<PedidosVenda />} />
             <Route path="/faturamento" element={<Faturamento />} />
+            <Route path="/pedidos-compra" element={<PedidosCompra />} />
+            <Route path="/contas-receber" element={<ContasReceber />} />
             {/* Rotas placeholder para módulos ainda não implementados */}
-            <Route path="/pedidos-compra" element={
-              <div className="flex items-center justify-center min-h-[400px]">
-                <div className="text-center">
-                  <h2 className="text-2xl font-bold mb-2">Módulo de Pedidos de Compra</h2>
-                  <p className="text-muted-foreground">Em desenvolvimento</p>
-                </div>
-              </div>
-            } />
-            <Route path="/contas-receber" element={
-              <div className="flex items-center justify-center min-h-[400px]">
-                <div className="text-center">
-                  <h2 className="text-2xl font-bold mb-2">Módulo de Contas a Receber</h2>
-                  <p className="text-muted-foreground">Em desenvolvimento</p>
-                </div>
-              </div>
-            } />
             <Route path="/contas-pagar" element={
               <div className="flex items-center justify-center min-h-[400px]">
                 <div className="text-center">
