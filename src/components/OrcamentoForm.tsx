@@ -26,9 +26,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { orcamentoSchema, type Orcamento } from "@/lib/validations"
+import { orcamentoSchema, type Orcamento, ItemOrcamentoExpandido } from "@/lib/validations"
 import { useToast } from "@/hooks/use-toast"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
+import { ItemOrcamentoManager } from "./ItemOrcamentoManager"
 
 interface OrcamentoFormProps {
   open: boolean
@@ -39,6 +40,7 @@ interface OrcamentoFormProps {
 
 export function OrcamentoForm({ open, onOpenChange, orcamento, onSave }: OrcamentoFormProps) {
   const { toast } = useToast()
+  const [itens, setItens] = useState<ItemOrcamentoExpandido[]>([])
   
   const form = useForm<Orcamento>({
     resolver: zodResolver(orcamentoSchema),
@@ -58,22 +60,43 @@ export function OrcamentoForm({ open, onOpenChange, orcamento, onSave }: Orcamen
   useEffect(() => {
     if (orcamento) {
       form.reset(orcamento)
+      setItens([]) // Em um sistema real, carregaria os itens do orçamento
     } else {
+      const hoje = new Date()
+      const validade = new Date(hoje)
+      validade.setDate(hoje.getDate() + 30) // 30 dias de validade padrão
+      
       form.reset({
         numero: `ORC-${Date.now()}`,
         clienteId: 0,
         vendedorId: 0,
-        dataOrcamento: new Date().toISOString().split('T')[0],
-        validadeOrcamento: "",
+        dataOrcamento: hoje.toISOString().split('T')[0],
+        validadeOrcamento: validade.toISOString().split('T')[0],
         status: "Pendente",
         observacoes: "",
         desconto: 0,
         valorTotal: 0
       })
+      setItens([])
     }
   }, [orcamento, form])
 
+  const handleTotalChange = (novoTotal: number) => {
+    const desconto = form.getValues('desconto') || 0
+    const totalComDesconto = novoTotal * (1 - desconto / 100)
+    form.setValue('valorTotal', totalComDesconto)
+  }
+
   const onSubmit = (data: Orcamento) => {
+    if (itens.length === 0) {
+      toast({
+        title: "Erro",
+        description: "Adicione pelo menos um item ao orçamento.",
+        variant: "destructive"
+      })
+      return
+    }
+
     onSave(data)
     toast({
       title: orcamento ? "Orçamento atualizado" : "Orçamento criado",
@@ -84,7 +107,7 @@ export function OrcamentoForm({ open, onOpenChange, orcamento, onSave }: Orcamen
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[1000px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {orcamento ? "Editar Orçamento" : "Novo Orçamento"}
@@ -95,7 +118,7 @@ export function OrcamentoForm({ open, onOpenChange, orcamento, onSave }: Orcamen
         </DialogHeader>
         
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -214,20 +237,30 @@ export function OrcamentoForm({ open, onOpenChange, orcamento, onSave }: Orcamen
               />
             </div>
 
+            {/* Gerenciador de Itens */}
+            <ItemOrcamentoManager
+              itens={itens}
+              onItensChange={setItens}
+              onTotalChange={handleTotalChange}
+            />
+
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="desconto"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Desconto (%)</FormLabel>
+                    <FormLabel>Desconto Geral (%)</FormLabel>
                     <FormControl>
                       <Input 
                         type="number" 
                         step="0.01"
                         placeholder="0.00" 
                         {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))} 
+                        onChange={(e) => {
+                          field.onChange(Number(e.target.value))
+                          handleTotalChange(itens.reduce((sum, item) => sum + (item.subtotal || 0), 0))
+                        }} 
                       />
                     </FormControl>
                     <FormMessage />
@@ -247,7 +280,8 @@ export function OrcamentoForm({ open, onOpenChange, orcamento, onSave }: Orcamen
                         step="0.01"
                         placeholder="0.00" 
                         {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))} 
+                        readOnly
+                        className="bg-muted"
                       />
                     </FormControl>
                     <FormMessage />

@@ -26,9 +26,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { pedidoSchema, type Pedido } from "@/lib/validations"
+import { pedidoSchema, type Pedido, ItemPedidoExpandido } from "@/lib/validations"
 import { useToast } from "@/hooks/use-toast"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
+import { ItemPedidoManager } from "./ItemPedidoManager"
 
 interface PedidoVendaFormProps {
   open: boolean
@@ -39,6 +40,7 @@ interface PedidoVendaFormProps {
 
 export function PedidoVendaForm({ open, onOpenChange, pedido, onSave }: PedidoVendaFormProps) {
   const { toast } = useToast()
+  const [itens, setItens] = useState<ItemPedidoExpandido[]>([])
   
   const form = useForm<Pedido>({
     resolver: zodResolver(pedidoSchema),
@@ -58,6 +60,7 @@ export function PedidoVendaForm({ open, onOpenChange, pedido, onSave }: PedidoVe
   useEffect(() => {
     if (pedido) {
       form.reset(pedido)
+      setItens([]) // Em um sistema real, carregaria os itens do pedido
     } else {
       form.reset({
         numero: `PV-${Date.now()}`,
@@ -70,10 +73,26 @@ export function PedidoVendaForm({ open, onOpenChange, pedido, onSave }: PedidoVe
         desconto: 0,
         valorTotal: 0
       })
+      setItens([])
     }
   }, [pedido, form])
 
+  const handleTotalChange = (novoTotal: number) => {
+    const desconto = form.getValues('desconto') || 0
+    const totalComDesconto = novoTotal * (1 - desconto / 100)
+    form.setValue('valorTotal', totalComDesconto)
+  }
+
   const onSubmit = (data: Pedido) => {
+    if (itens.length === 0) {
+      toast({
+        title: "Erro",
+        description: "Adicione pelo menos um item ao pedido.",
+        variant: "destructive"
+      })
+      return
+    }
+
     onSave(data)
     toast({
       title: pedido ? "Pedido atualizado" : "Pedido criado",
@@ -84,7 +103,7 @@ export function PedidoVendaForm({ open, onOpenChange, pedido, onSave }: PedidoVe
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[1000px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {pedido ? "Editar Pedido de Venda" : "Novo Pedido de Venda"}
@@ -95,7 +114,7 @@ export function PedidoVendaForm({ open, onOpenChange, pedido, onSave }: PedidoVe
         </DialogHeader>
         
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -214,20 +233,30 @@ export function PedidoVendaForm({ open, onOpenChange, pedido, onSave }: PedidoVe
               />
             </div>
 
+            {/* Gerenciador de Itens */}
+            <ItemPedidoManager
+              itens={itens}
+              onItensChange={setItens}
+              onTotalChange={handleTotalChange}
+            />
+
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="desconto"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Desconto (%)</FormLabel>
+                    <FormLabel>Desconto Geral (%)</FormLabel>
                     <FormControl>
                       <Input 
                         type="number" 
                         step="0.01"
                         placeholder="0.00" 
                         {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))} 
+                        onChange={(e) => {
+                          field.onChange(Number(e.target.value))
+                          handleTotalChange(itens.reduce((sum, item) => sum + (item.subtotal || 0), 0))
+                        }} 
                       />
                     </FormControl>
                     <FormMessage />
@@ -247,7 +276,8 @@ export function PedidoVendaForm({ open, onOpenChange, pedido, onSave }: PedidoVe
                         step="0.01"
                         placeholder="0.00" 
                         {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))} 
+                        readOnly
+                        className="bg-muted"
                       />
                     </FormControl>
                     <FormMessage />

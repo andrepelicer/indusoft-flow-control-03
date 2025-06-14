@@ -107,6 +107,29 @@ export const itemOrcamentoSchema = z.object({
   desconto: z.number().min(0).max(100, "Desconto deve estar entre 0% e 100%").optional()
 })
 
+// Adicionando tipos para itens com dados expandidos
+export type ItemPedidoExpandido = ItemPedido & {
+  id?: number
+  produto?: {
+    id: number
+    nome: string
+    codigo: string
+    precoVenda: number
+  }
+  subtotal?: number
+}
+
+export type ItemOrcamentoExpandido = ItemOrcamento & {
+  id?: number
+  produto?: {
+    id: number
+    nome: string
+    codigo: string
+    precoVenda: number
+  }
+  subtotal?: number
+}
+
 export type Cliente = z.infer<typeof clienteSchema>
 export type Fornecedor = z.infer<typeof fornecedorSchema>
 export type Produto = z.infer<typeof produtoSchema>
