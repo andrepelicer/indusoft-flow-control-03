@@ -7,15 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Plus, Trash2, Search, Settings, X } from "lucide-react"
 import { ItemPedidoExpandido } from "@/lib/validations"
 import { Badge } from "@/components/ui/badge"
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogHeader, 
-  DialogTitle,
-  DialogTrigger 
-} from "@/components/ui/dialog"
-import { useToast } from "@/hooks/use-toast"
+import { OrdemProducaoDialog } from "./OrdemProducaoDialog"
 
 interface ItemPedidoManagerProps {
   itens: ItemPedidoExpandido[]
@@ -38,7 +30,6 @@ const produtosMock = [
 ]
 
 export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemPedidoManagerProps) {
-  const { toast } = useToast()
   const [novoItem, setNovoItem] = useState<Partial<ItemPedidoExpandido>>({
     produtoId: undefined,
     quantidade: 1,
@@ -49,8 +40,6 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
   const [showDropdown, setShowDropdown] = useState(false)
   const [ordemProducaoDialog, setOrdemProducaoDialog] = useState(false)
   const [itemSelecionado, setItemSelecionado] = useState<ItemPedidoExpandido | null>(null)
-  const [dataPrevisao, setDataPrevisao] = useState("")
-  const [observacoesOP, setObservacoesOP] = useState("")
 
   const calcularSubtotal = (item: ItemPedidoExpandido) => {
     const subtotal = item.quantidade * item.precoUnitario
@@ -144,67 +133,13 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
   const abrirDialogOrdemProducao = (item: ItemPedidoExpandido) => {
     console.log('Abrindo dialog para ordem de produção:', item)
     setItemSelecionado(item)
-    setDataPrevisao("")
-    setObservacoesOP(`Ordem gerada automaticamente do pedido de venda para ${item.produto?.nome}`)
     setOrdemProducaoDialog(true)
   }
 
-  const gerarOrdemProducao = () => {
-    console.log('Gerando ordem de produção...')
-    
-    if (!itemSelecionado) {
-      console.log('Nenhum item selecionado')
-      toast({
-        title: "Erro",
-        description: "Nenhum item selecionado para gerar ordem de produção.",
-        variant: "destructive"
-      })
-      return
-    }
-
-    if (!dataPrevisao) {
-      console.log('Data de previsão não preenchida')
-      toast({
-        title: "Erro",
-        description: "Por favor, preencha a data de previsão.",
-        variant: "destructive"
-      })
-      return
-    }
-
-    const novaOrdem = {
-      id: Date.now(),
-      numero: `OP-${Date.now()}`,
-      produtoId: itemSelecionado.produtoId,
-      produto: itemSelecionado.produto?.nome,
-      codigo: itemSelecionado.produto?.codigo,
-      quantidade: itemSelecionado.quantidade,
-      status: 'Pendente',
-      dataCriacao: new Date().toISOString().split('T')[0],
-      dataPrevisao: dataPrevisao,
-      observacoes: observacoesOP
-    }
-    
-    console.log('Ordem de Produção criada:', novaOrdem)
-    
-    toast({
-      title: "Ordem de Produção Criada",
-      description: `Ordem ${novaOrdem.numero} criada com sucesso para ${novaOrdem.produto}!`,
-    })
-    
-    // Reset do dialog
+  const fecharDialogOrdemProducao = () => {
+    console.log('Fechando dialog de ordem de produção')
     setOrdemProducaoDialog(false)
     setItemSelecionado(null)
-    setDataPrevisao("")
-    setObservacoesOP("")
-  }
-
-  const fecharDialog = () => {
-    console.log('Fechando dialog')
-    setOrdemProducaoDialog(false)
-    setItemSelecionado(null)
-    setDataPrevisao("")
-    setObservacoesOP("")
   }
 
   const produtosFiltrados = produtosMock.filter(produto =>
@@ -411,70 +346,11 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
         )}
 
         {/* Dialog para Ordem de Produção */}
-        <Dialog open={ordemProducaoDialog} onOpenChange={setOrdemProducaoDialog}>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Gerar Ordem de Produção</DialogTitle>
-              <DialogDescription>
-                Preencha os dados para criar uma ordem de produção para este item.
-              </DialogDescription>
-            </DialogHeader>
-            
-            {itemSelecionado && (
-              <div className="space-y-4">
-                <div className="p-4 border rounded-lg bg-muted/50">
-                  <h4 className="font-medium mb-2">Item Selecionado:</h4>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div>
-                      <span className="font-medium">Produto:</span> {itemSelecionado.produto?.nome}
-                    </div>
-                    <div>
-                      <span className="font-medium">Código:</span> {itemSelecionado.produto?.codigo}
-                    </div>
-                    <div>
-                      <span className="font-medium">Quantidade:</span> {itemSelecionado.quantidade}
-                    </div>
-                    <div>
-                      <span className="font-medium">Valor Unit.:</span> R$ {itemSelecionado.precoUnitario.toFixed(2)}
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-sm font-medium">Data de Previsão *</label>
-                    <Input
-                      type="date"
-                      value={dataPrevisao}
-                      onChange={(e) => setDataPrevisao(e.target.value)}
-                      min={new Date().toISOString().split('T')[0]}
-                      className="mt-1"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="text-sm font-medium">Observações</label>
-                    <Input
-                      value={observacoesOP}
-                      onChange={(e) => setObservacoesOP(e.target.value)}
-                      placeholder="Observações para a ordem de produção..."
-                      className="mt-1"
-                    />
-                  </div>
-                </div>
-                
-                <div className="flex justify-end gap-2 pt-4">
-                  <Button variant="outline" onClick={fecharDialog}>
-                    Cancelar
-                  </Button>
-                  <Button onClick={gerarOrdemProducao} disabled={!dataPrevisao}>
-                    Gerar Ordem de Produção
-                  </Button>
-                </div>
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
+        <OrdemProducaoDialog
+          open={ordemProducaoDialog}
+          onOpenChange={setOrdemProducaoDialog}
+          item={itemSelecionado}
+        />
       </CardContent>
     </Card>
   )
