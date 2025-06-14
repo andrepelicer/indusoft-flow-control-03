@@ -21,6 +21,13 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
+interface PagamentoParcial {
+  id: number
+  data: string
+  valor: number
+  formaPagamento?: string
+}
+
 interface ContaReceber {
   id: number
   numeroDocumento: string
@@ -33,6 +40,7 @@ interface ContaReceber {
   valorPago?: number
   status: "Pendente" | "Pago" | "Vencido" | "Parcial"
   formaPagamento?: string
+  pagamentosRealizados?: PagamentoParcial[]
 }
 
 interface Cliente {
@@ -72,7 +80,10 @@ export default function ContasReceber() {
       valorOriginal: 1250.00,
       valorPago: 1250.00,
       status: "Pago",
-      formaPagamento: "PIX"
+      formaPagamento: "PIX",
+      pagamentosRealizados: [
+        { id: 1, data: "2024-02-10", valor: 1250.00, formaPagamento: "PIX" }
+      ]
     },
     {
       id: 2,
@@ -82,7 +93,8 @@ export default function ContasReceber() {
       descricao: "Prestação de serviços",
       dataVencimento: "2024-02-20",
       valorOriginal: 850.00,
-      status: "Pendente"
+      status: "Pendente",
+      pagamentosRealizados: []
     },
     {
       id: 3,
@@ -93,7 +105,11 @@ export default function ContasReceber() {
       dataVencimento: "2024-01-30",
       valorOriginal: 2100.00,
       valorPago: 1000.00,
-      status: "Vencido"
+      status: "Parcial",
+      pagamentosRealizados: [
+        { id: 2, data: "2024-02-01", valor: 500.00, formaPagamento: "PIX" },
+        { id: 3, data: "2024-02-05", valor: 500.00, formaPagamento: "Boleto" }
+      ]
     }
   ])
 
@@ -155,6 +171,14 @@ export default function ContasReceber() {
     const novoValorPago = (conta.valorPago || 0) + valorPago
     const novoStatus = novoValorPago >= conta.valorOriginal ? "Pago" : "Parcial"
 
+    // Criar novo pagamento
+    const novoPagamento: PagamentoParcial = {
+      id: Date.now(), // Em uma aplicação real, seria gerado pelo backend
+      data: dataRecebimento,
+      valor: valorPago,
+      formaPagamento: "PIX" // Poderia ser um campo do modal
+    }
+
     setContas(prev => prev.map(c => 
       c.id === contaId 
         ? { 
@@ -162,7 +186,8 @@ export default function ContasReceber() {
             status: novoStatus,
             dataPagamento: novoStatus === "Pago" ? dataRecebimento : c.dataPagamento,
             valorPago: novoValorPago,
-            formaPagamento: novoStatus === "Pago" ? "PIX" : c.formaPagamento
+            formaPagamento: novoStatus === "Pago" ? "PIX" : c.formaPagamento,
+            pagamentosRealizados: [...(c.pagamentosRealizados || []), novoPagamento]
           }
         : c
     ))
@@ -190,8 +215,9 @@ export default function ContasReceber() {
             ...c, 
             status: novoStatus,
             dataPagamento: undefined,
-            valorPago: undefined,
-            formaPagamento: undefined
+            valorPago: 0,
+            formaPagamento: undefined,
+            pagamentosRealizados: []
           }
         : c
     ))
