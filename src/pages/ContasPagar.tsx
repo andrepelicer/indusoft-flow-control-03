@@ -7,6 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { Search, Plus, CreditCard, AlertCircle, CheckCircle, Clock, Eye } from "lucide-react"
 import { ContaDetalhesModal } from "@/components/contas-pagar/ContaDetalhesModal"
+import { ContaEdicaoModal } from "@/components/contas-pagar/ContaEdicaoModal"
+import { PagamentoModal } from "@/components/contas-pagar/PagamentoModal"
 import { useToast } from "@/hooks/use-toast"
 
 interface ContaPagar {
@@ -18,12 +20,16 @@ interface ContaPagar {
   valor: number
   status: 'Pendente' | 'Pago' | 'Vencido'
   categoria: string
+  dataPagamento?: string
 }
 
 export default function ContasPagar() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedConta, setSelectedConta] = useState<ContaPagar | null>(null)
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isDetalhesModalOpen, setIsDetalhesModalOpen] = useState(false)
+  const [isEdicaoModalOpen, setIsEdicaoModalOpen] = useState(false)
+  const [isPagamentoModalOpen, setIsPagamentoModalOpen] = useState(false)
+  const [contaParaPagamento, setContaParaPagamento] = useState<number | null>(null)
   const { toast } = useToast()
   
   const [contas, setContas] = useState<ContaPagar[]>([
@@ -55,7 +61,8 @@ export default function ContasPagar() {
       vencimento: "2024-01-20",
       valor: 850.00,
       status: "Pago",
-      categoria: "Frete"
+      categoria: "Frete",
+      dataPagamento: "2024-01-18"
     }
   ])
 
@@ -87,26 +94,52 @@ export default function ContasPagar() {
 
   const handleVerDetalhes = (conta: ContaPagar) => {
     setSelectedConta(conta)
-    setIsModalOpen(true)
+    setIsDetalhesModalOpen(true)
   }
 
   const handlePagar = (id: number) => {
+    setContaParaPagamento(id)
+    setIsPagamentoModalOpen(true)
+    setIsDetalhesModalOpen(false)
+  }
+
+  const handleConfirmarPagamento = (id: number, dataPagamento: string) => {
     setContas(contas.map(conta => 
-      conta.id === id ? { ...conta, status: 'Pago' as const } : conta
+      conta.id === id ? { ...conta, status: 'Pago' as const, dataPagamento } : conta
     ))
-    setIsModalOpen(false)
     toast({
       title: "Pagamento realizado",
       description: "A conta foi marcada como paga com sucesso.",
     })
   }
 
-  const handleEditar = (id: number) => {
-    console.log("Editar conta:", id)
-    setIsModalOpen(false)
+  const handleEstornar = (id: number) => {
+    setContas(contas.map(conta => 
+      conta.id === id ? { ...conta, status: 'Pendente' as const, dataPagamento: undefined } : conta
+    ))
+    setIsDetalhesModalOpen(false)
     toast({
-      title: "Funcionalidade em desenvolvimento",
-      description: "A edição de contas será implementada em breve.",
+      title: "Pagamento estornado",
+      description: "O pagamento foi estornado e a conta voltou para pendente.",
+    })
+  }
+
+  const handleEditar = (id: number) => {
+    const conta = contas.find(c => c.id === id)
+    if (conta) {
+      setSelectedConta(conta)
+      setIsEdicaoModalOpen(true)
+      setIsDetalhesModalOpen(false)
+    }
+  }
+
+  const handleSalvarEdicao = (contaEditada: ContaPagar) => {
+    setContas(contas.map(conta => 
+      conta.id === contaEditada.id ? contaEditada : conta
+    ))
+    toast({
+      title: "Conta atualizada",
+      description: "As alterações foram salvas com sucesso.",
     })
   }
 
@@ -235,10 +268,25 @@ export default function ContasPagar() {
 
       <ContaDetalhesModal
         conta={selectedConta}
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={isDetalhesModalOpen}
+        onClose={() => setIsDetalhesModalOpen(false)}
         onPagar={handlePagar}
         onEditar={handleEditar}
+        onEstornar={handleEstornar}
+      />
+
+      <ContaEdicaoModal
+        conta={selectedConta}
+        isOpen={isEdicaoModalOpen}
+        onClose={() => setIsEdicaoModalOpen(false)}
+        onSave={handleSalvarEdicao}
+      />
+
+      <PagamentoModal
+        contaId={contaParaPagamento}
+        isOpen={isPagamentoModalOpen}
+        onClose={() => setIsPagamentoModalOpen(false)}
+        onConfirm={handleConfirmarPagamento}
       />
     </div>
   )

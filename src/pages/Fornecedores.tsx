@@ -1,144 +1,109 @@
+
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Building2, Plus, Search, Star, MapPin, Phone, Mail, FileText } from "lucide-react"
-import { FornecedoresStats } from "@/components/fornecedores/FornecedoresStats"
-import { FornecedoresFilters } from "@/components/fornecedores/FornecedoresFilters"
-import { FornecedoresTable } from "@/components/fornecedores/FornecedoresTable"
+import { Search, Plus, Building2, Phone, Mail, Edit, Trash2 } from "lucide-react"
 
-export interface FornecedorComId {
-  id: number
-  razaoSocial: string
-  nomeFantasia: string
-  cnpj: string
-  inscricaoEstadual?: string
-  endereco: string
+interface Endereco {
+  rua: string
+  numero: string
+  complemento?: string
+  bairro: string
   cidade: string
   estado: string
   cep: string
-  telefone: string
-  email: string
-  contato: string
-  observacoes?: string
-  status?: "Ativo" | "Inativo"
-  categoria: string
-  avaliacao: number
-  ultimaCompra?: string
-  totalCompras?: number
+}
+
+interface Fornecedor {
+  cnpj: string
+  razaoSocial: string
+  nomeFantasia?: string
+  telefone?: string
+  email?: string
+  endereco: Endereco
+  ativo: boolean
+}
+
+interface FornecedorComId extends Fornecedor {
+  id: number
 }
 
 export default function Fornecedores() {
   const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState<string>("all")
-  const [categoriaFilter, setCategoriaFilter] = useState<string>("all")
   
-  const [fornecedores] = useState<FornecedorComId[]>([
+  const [fornecedores, setFornecedores] = useState<FornecedorComId[]>([
     {
       id: 1,
+      cnpj: "12.345.678/0001-90",
       razaoSocial: "Aços Especiais Ltda",
       nomeFantasia: "Aços Especiais",
-      cnpj: "12.345.678/0001-90",
-      inscricaoEstadual: "123456789",
-      endereco: "Rua Industrial, 123",
-      cidade: "São Paulo",
-      estado: "SP",
-      cep: "01234-567",
       telefone: "(11) 3456-7890",
       email: "contato@acosespeciais.com.br",
-      contato: "João Silva",
-      observacoes: "Fornecedor principal de matéria-prima",
-      status: "Ativo",
-      categoria: "Matéria-Prima",
-      avaliacao: 4.5,
-      ultimaCompra: "2024-01-15",
-      totalCompras: 25000.00
+      endereco: {
+        rua: "Rua da Indústria",
+        numero: "123",
+        bairro: "Industrial",
+        cidade: "São Paulo",
+        estado: "SP",
+        cep: "01234-567"
+      },
+      ativo: true
     },
     {
       id: 2,
-      razaoSocial: "Transportes Rápidos S.A.",
-      nomeFantasia: "TR Transportes",
       cnpj: "98.765.432/0001-10",
-      endereco: "Av. Logística, 456",
-      cidade: "Santos",
-      estado: "SP",
-      cep: "11234-567",
-      telefone: "(13) 2345-6789",
-      email: "vendas@trtransportes.com.br",
-      contato: "Maria Santos",
-      status: "Ativo",
-      categoria: "Logística",
-      avaliacao: 4.0,
-      ultimaCompra: "2024-01-10",
-      totalCompras: 8500.00
+      razaoSocial: "Materiais de Construção Silva & Cia",
+      nomeFantasia: "Silva Materiais",
+      telefone: "(11) 2345-6789",
+      email: "vendas@silvamat.com.br",
+      endereco: {
+        rua: "Av. das Construções",
+        numero: "456",
+        bairro: "Centro",
+        cidade: "São Paulo",
+        estado: "SP",
+        cep: "02345-678"
+      },
+      ativo: true
     },
     {
       id: 3,
-      razaoSocial: "Embalagens Premium ME",
-      nomeFantasia: "Premium Pack",
       cnpj: "11.222.333/0001-44",
-      endereco: "Rua das Embalagens, 789",
-      cidade: "Rio de Janeiro",
-      estado: "RJ",
-      cep: "21234-567",
-      telefone: "(21) 3333-4444",
-      email: "comercial@premiumpack.com.br",
-      contato: "Carlos Oliveira",
-      status: "Inativo",
-      categoria: "Embalagens",
-      avaliacao: 3.5,
-      ultimaCompra: "2023-12-05",
-      totalCompras: 12000.00
+      razaoSocial: "Transportes Rápidos S.A.",
+      nomeFantasia: "Rápidos",
+      telefone: "(11) 4567-8901",
+      email: "logistica@rapidostransportes.com.br",
+      endereco: {
+        rua: "Rod. dos Transportes",
+        numero: "789",
+        bairro: "Logística",
+        cidade: "São Paulo",
+        estado: "SP",
+        cep: "03456-789"
+      },
+      ativo: false
     }
   ])
 
-  const filteredFornecedores = fornecedores.filter(fornecedor => {
-    const matchesSearch = fornecedor.razaoSocial.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         fornecedor.nomeFantasia.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         fornecedor.cnpj.includes(searchTerm)
-    
-    const matchesStatus = statusFilter === "all" || fornecedor.status === statusFilter
-    const matchesCategoria = categoriaFilter === "all" || fornecedor.categoria === categoriaFilter
-    
-    return matchesSearch && matchesStatus && matchesCategoria
-  })
+  const filteredFornecedores = fornecedores.filter(fornecedor =>
+    fornecedor.razaoSocial.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    fornecedor.cnpj.includes(searchTerm) ||
+    (fornecedor.nomeFantasia?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false)
+  )
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value)
+  const totalFornecedores = fornecedores.length
+  const fornecedoresAtivos = fornecedores.filter(f => f.ativo).length
+  const fornecedoresInativos = fornecedores.filter(f => !f.ativo).length
+
+  const handleEditar = (fornecedor: FornecedorComId) => {
+    console.log("Editar fornecedor:", fornecedor.id)
   }
 
-  const renderStars = (rating: number) => {
-    return (
-      <div className="flex items-center">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <Star
-            key={star}
-            className={`h-4 w-4 ${
-              star <= rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
-            }`}
-          />
-        ))}
-        <span className="ml-1 text-sm text-gray-600">({rating})</span>
-      </div>
-    )
-  }
-
-  const handleEditFornecedor = (id: number) => {
-    console.log("Editar fornecedor:", id)
-  }
-
-  const handleViewDetails = (id: number) => {
-    console.log("Ver detalhes do fornecedor:", id)
-  }
-
-  const handleDeleteFornecedor = (fornecedor: FornecedorComId) => {
-    console.log("Delete fornecedor:", fornecedor.id)
+  const handleExcluir = (id: number) => {
+    setFornecedores(fornecedores.filter(fornecedor => fornecedor.id !== id))
   }
 
   return (
@@ -149,7 +114,7 @@ export default function Fornecedores() {
             <Building2 className="h-6 w-6" />
             <h2 className="text-2xl font-bold">Fornecedores</h2>
           </div>
-          <p className="text-muted-foreground">Gerencie seus fornecedores e parcerias</p>
+          <p className="text-muted-foreground">Gerenciamento de fornecedores e parceiros</p>
         </div>
         <Button className="w-full sm:w-auto">
           <Plus className="h-4 w-4 mr-2" />
@@ -157,104 +122,117 @@ export default function Fornecedores() {
         </Button>
       </div>
 
-      <Tabs defaultValue="lista" className="w-full">
-        <TabsList>
-          <TabsTrigger value="lista">Lista</TabsTrigger>
-          <TabsTrigger value="estatisticas">Estatísticas</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="lista" className="space-y-4">
-          <FornecedoresStats fornecedores={fornecedores} />
-          
-          <FornecedoresFilters
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-          />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-primary">
+              {totalFornecedores}
+            </div>
+            <div className="text-sm text-muted-foreground">Total</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-green-600">
+              {fornecedoresAtivos}
+            </div>
+            <div className="text-sm text-muted-foreground">Ativos</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-red-600">
+              {fornecedoresInativos}
+            </div>
+            <div className="text-sm text-muted-foreground">Inativos</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-blue-600">
+              {fornecedoresAtivos}
+            </div>
+            <div className="text-sm text-muted-foreground">Parceiros</div>
+          </CardContent>
+        </Card>
+      </div>
 
-          <FornecedoresTable
-            fornecedores={filteredFornecedores}
-            onEdit={handleEditFornecedor}
-            onDelete={handleDeleteFornecedor}
-          />
-        </TabsContent>
-        
-        <TabsContent value="estatisticas">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card>
-              <CardHeader className="text-center">
-                <CardTitle className="text-lg">Fornecedores por Categoria</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {['Matéria-Prima', 'Logística', 'Embalagens'].map((categoria) => {
-                    const count = fornecedores.filter(f => f.categoria === categoria).length
-                    const percentage = (count / fornecedores.length) * 100
-                    return (
-                      <div key={categoria} className="flex justify-between items-center">
-                        <span className="text-sm">{categoria}</span>
-                        <div className="flex items-center gap-2">
-                          <div className="w-20 bg-gray-200 rounded-full h-2">
-                            <div 
-                              className="bg-blue-600 h-2 rounded-full" 
-                              style={{ width: `${percentage}%` }}
-                            ></div>
-                          </div>
-                          <span className="text-sm font-medium">{count}</span>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="text-center">
-                <CardTitle className="text-lg">Status dos Fornecedores</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {['Ativo', 'Inativo'].map((status) => {
-                    const count = fornecedores.filter(f => f.status === status).length
-                    const percentage = (count / fornecedores.length) * 100
-                    return (
-                      <div key={status} className="flex justify-between items-center">
-                        <span className="text-sm">{status}</span>
-                        <div className="flex items-center gap-2">
-                          <div className="w-20 bg-gray-200 rounded-full h-2">
-                            <div 
-                              className={`h-2 rounded-full ${
-                                status === 'Ativo' ? 'bg-green-600' : 'bg-red-600'
-                              }`}
-                              style={{ width: `${percentage}%` }}
-                            ></div>
-                          </div>
-                          <span className="text-sm font-medium">{count}</span>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="text-center">
-                <CardTitle className="text-lg">Avaliação Média</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center">
-                <div className="text-3xl font-bold mb-2">
-                  {(fornecedores.reduce((sum, f) => sum + f.avaliacao, 0) / fornecedores.length).toFixed(1)}
-                </div>
-                {renderStars(fornecedores.reduce((sum, f) => sum + f.avaliacao, 0) / fornecedores.length)}
-                <p className="text-sm text-muted-foreground mt-2">
-                  Baseado em {fornecedores.length} fornecedores
-                </p>
-              </CardContent>
-            </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Filtros</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input
+              placeholder="Buscar por razão social, CNPJ ou nome fantasia..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
           </div>
-        </TabsContent>
-      </Tabs>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Lista de Fornecedores</CardTitle>
+          <CardDescription>
+            {filteredFornecedores.length} fornecedor(es) encontrado(s)
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Razão Social</TableHead>
+                  <TableHead className="hidden sm:table-cell">CNPJ</TableHead>
+                  <TableHead className="hidden md:table-cell">Nome Fantasia</TableHead>
+                  <TableHead className="hidden lg:table-cell">Telefone</TableHead>
+                  <TableHead className="hidden lg:table-cell">Email</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredFornecedores.map((fornecedor) => (
+                  <TableRow key={fornecedor.id}>
+                    <TableCell className="font-medium">{fornecedor.razaoSocial}</TableCell>
+                    <TableCell className="hidden sm:table-cell font-mono text-sm">{fornecedor.cnpj}</TableCell>
+                    <TableCell className="hidden md:table-cell">{fornecedor.nomeFantasia || '-'}</TableCell>
+                    <TableCell className="hidden lg:table-cell">{fornecedor.telefone || '-'}</TableCell>
+                    <TableCell className="hidden lg:table-cell">{fornecedor.email || '-'}</TableCell>
+                    <TableCell>
+                      <Badge variant={fornecedor.ativo ? 'default' : 'secondary'}>
+                        {fornecedor.ativo ? 'Ativo' : 'Inativo'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleEditar(fornecedor)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleExcluir(fornecedor.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

@@ -2,7 +2,7 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle, AlertCircle, Clock } from "lucide-react"
+import { CheckCircle, AlertCircle, Clock, Undo } from "lucide-react"
 
 interface ContaPagar {
   id: number
@@ -13,6 +13,7 @@ interface ContaPagar {
   valor: number
   status: 'Pendente' | 'Pago' | 'Vencido'
   categoria: string
+  dataPagamento?: string
 }
 
 interface ContaDetalhesModalProps {
@@ -21,9 +22,10 @@ interface ContaDetalhesModalProps {
   onClose: () => void
   onPagar: (id: number) => void
   onEditar: (id: number) => void
+  onEstornar: (id: number) => void
 }
 
-export function ContaDetalhesModal({ conta, isOpen, onClose, onPagar, onEditar }: ContaDetalhesModalProps) {
+export function ContaDetalhesModal({ conta, isOpen, onClose, onPagar, onEditar, onEstornar }: ContaDetalhesModalProps) {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'Pago': return <CheckCircle className="h-4 w-4" />
@@ -92,6 +94,13 @@ export function ContaDetalhesModal({ conta, isOpen, onClose, onPagar, onEditar }
               </Badge>
             </div>
           </div>
+
+          {conta.status === 'Pago' && conta.dataPagamento && (
+            <div>
+              <label className="text-sm font-medium text-gray-500">Data do Pagamento</label>
+              <p className="text-base">{new Date(conta.dataPagamento).toLocaleDateString('pt-BR')}</p>
+            </div>
+          )}
           
           <div className="pt-4 border-t">
             <div className="flex gap-2">
@@ -101,6 +110,16 @@ export function ContaDetalhesModal({ conta, isOpen, onClose, onPagar, onEditar }
                   onClick={() => onPagar(conta.id)}
                 >
                   Efetuar Pagamento
+                </Button>
+              )}
+              {conta.status === 'Pago' && (
+                <Button 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => onEstornar(conta.id)}
+                >
+                  <Undo className="h-4 w-4 mr-2" />
+                  Estornar Pagamento
                 </Button>
               )}
               <Button 
