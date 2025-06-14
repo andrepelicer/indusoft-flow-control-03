@@ -5,8 +5,30 @@ import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Plus, Trash2 } from "lucide-react"
+import { Plus, Trash2, Search, Settings } from "lucide-react"
 import { ItemPedidoExpandido } from "@/lib/validations"
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { Badge } from "@/components/ui/badge"
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogHeader, 
+  DialogTitle,
+  DialogTrigger 
+} from "@/components/ui/dialog"
 
 interface ItemPedidoManagerProps {
   itens: ItemPedidoExpandido[]
@@ -20,7 +42,12 @@ const produtosMock = [
   { id: 2, nome: "Perfil L 50x50x3", codigo: "PF002", precoVenda: 45.50 },
   { id: 3, nome: "Tubo Redondo 2\"", codigo: "TR003", precoVenda: 89.90 },
   { id: 4, nome: "Solda Eletrodo 3,25mm", codigo: "SO004", precoVenda: 25.80 },
-  { id: 5, nome: "Tinta Anticorrosiva", codigo: "TI005", precoVenda: 67.30 }
+  { id: 5, nome: "Tinta Anticorrosiva", codigo: "TI005", precoVenda: 67.30 },
+  { id: 6, nome: "Parafuso M8x25", codigo: "PA006", precoVenda: 1.20 },
+  { id: 7, nome: "Porca M8", codigo: "PO007", precoVenda: 0.80 },
+  { id: 8, nome: "Arruela Lisa M8", codigo: "AR008", precoVenda: 0.25 },
+  { id: 9, nome: "Chapa Galvanizada 2mm", codigo: "CG009", precoVenda: 180.00 },
+  { id: 10, nome: "Barra Redonda 12mm", codigo: "BR010", precoVenda: 35.60 }
 ]
 
 export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemPedidoManagerProps) {
@@ -30,6 +57,10 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
     precoUnitario: 0,
     desconto: 0
   })
+  const [open, setOpen] = useState(false)
+  const [searchValue, setSearchValue] = useState("")
+  const [ordemProducaoDialog, setOrdemProducaoDialog] = useState(false)
+  const [itemSelecionado, setItemSelecionado] = useState<ItemPedidoExpandido | null>(null)
 
   const calcularSubtotal = (item: ItemPedidoExpandido) => {
     const subtotal = item.quantidade * item.precoUnitario
@@ -42,7 +73,6 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
   }
 
   const adicionarItem = () => {
-    // Validação melhorada
     if (!novoItem.produtoId || novoItem.produtoId === 0 || !novoItem.quantidade || novoItem.quantidade <= 0 || !novoItem.precoUnitario || novoItem.precoUnitario <= 0) {
       console.log('Validação falhou:', novoItem)
       return
@@ -77,6 +107,7 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
       precoUnitario: 0,
       desconto: 0
     })
+    setSearchValue("")
   }
 
   const removerItem = (id: number) => {
@@ -98,15 +129,42 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
     onTotalChange(calcularTotal(novosItens))
   }
 
-  const selecionarProduto = (produtoId: string) => {
-    const id = Number(produtoId)
-    const produto = produtosMock.find(p => p.id === id)
+  const selecionarProduto = (produto: typeof produtosMock[0]) => {
     setNovoItem({
       ...novoItem,
-      produtoId: id,
-      precoUnitario: produto?.precoVenda || 0
+      produtoId: produto.id,
+      precoUnitario: produto.precoVenda
     })
+    setSearchValue(`${produto.codigo} - ${produto.nome}`)
+    setOpen(false)
   }
+
+  const gerarOrdemProducao = (item: ItemPedidoExpandido) => {
+    // Aqui seria a integração real com o sistema de ordens de produção
+    console.log('Gerando ordem de produção para:', item)
+    
+    const novaOrdem = {
+      id: Date.now(),
+      numero: `OP-${Date.now()}`,
+      produtoId: item.produtoId,
+      produto: item.produto?.nome,
+      quantidade: item.quantidade,
+      status: 'Pendente',
+      dataCriacao: new Date().toISOString().split('T')[0],
+      dataPrevisao: '',
+      observacoes: `Ordem gerada automaticamente do pedido de venda`
+    }
+    
+    // Simulação de salvamento
+    alert(`Ordem de Produção ${novaOrdem.numero} criada com sucesso!`)
+    setOrdemProducaoDialog(false)
+    setItemSelecionado(null)
+  }
+
+  const produtosFiltrados = produtosMock.filter(produto =>
+    produto.nome.toLowerCase().includes(searchValue.toLowerCase()) ||
+    produto.codigo.toLowerCase().includes(searchValue.toLowerCase())
+  )
 
   return (
     <Card>
@@ -117,18 +175,48 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
         {/* Formulário para adicionar novo item */}
         <div className="grid grid-cols-1 md:grid-cols-6 gap-2 p-4 border rounded-lg">
           <div>
-            <Select value={novoItem.produtoId?.toString() || ""} onValueChange={selecionarProduto}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione um produto" />
-              </SelectTrigger>
-              <SelectContent>
-                {produtosMock.map(produto => (
-                  <SelectItem key={produto.id} value={produto.id.toString()}>
-                    {produto.codigo} - {produto.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Popover open={open} onOpenChange={setOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={open}
+                  className="w-full justify-between"
+                >
+                  {searchValue || "Buscar produto..."}
+                  <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[400px] p-0" align="start">
+                <Command>
+                  <CommandInput 
+                    placeholder="Digite o nome ou código do produto..." 
+                    value={searchValue}
+                    onValueChange={setSearchValue}
+                  />
+                  <CommandList>
+                    <CommandEmpty>Nenhum produto encontrado.</CommandEmpty>
+                    <CommandGroup>
+                      {produtosFiltrados.map((produto) => (
+                        <CommandItem
+                          key={produto.id}
+                          value={`${produto.codigo} ${produto.nome}`}
+                          onSelect={() => selecionarProduto(produto)}
+                          className="cursor-pointer"
+                        >
+                          <div className="flex flex-col">
+                            <span className="font-medium">{produto.nome}</span>
+                            <span className="text-sm text-muted-foreground">
+                              {produto.codigo} - R$ {produto.precoVenda.toFixed(2)}
+                            </span>
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
           <div>
             <Input
@@ -228,13 +316,27 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
                     R$ {calcularSubtotal(item).toFixed(2)}
                   </TableCell>
                   <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removerItem(item.id!)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        title="Gerar Ordem de Produção"
+                        onClick={() => {
+                          setItemSelecionado(item)
+                          setOrdemProducaoDialog(true)
+                        }}
+                      >
+                        <Settings className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        title="Remover"
+                        onClick={() => removerItem(item.id!)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -252,6 +354,39 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
             Nenhum item adicionado ao pedido
           </div>
         )}
+
+        {/* Dialog para Ordem de Produção */}
+        <Dialog open={ordemProducaoDialog} onOpenChange={setOrdemProducaoDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Gerar Ordem de Produção</DialogTitle>
+              <DialogDescription>
+                Deseja criar uma ordem de produção para este item?
+              </DialogDescription>
+            </DialogHeader>
+            
+            {itemSelecionado && (
+              <div className="space-y-4">
+                <div className="p-4 border rounded-lg">
+                  <h4 className="font-medium mb-2">Item Selecionado:</h4>
+                  <p><strong>Produto:</strong> {itemSelecionado.produto?.nome}</p>
+                  <p><strong>Código:</strong> {itemSelecionado.produto?.codigo}</p>
+                  <p><strong>Quantidade:</strong> {itemSelecionado.quantidade}</p>
+                  <p><strong>Preço Unitário:</strong> R$ {itemSelecionado.precoUnitario.toFixed(2)}</p>
+                </div>
+                
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setOrdemProducaoDialog(false)}>
+                    Cancelar
+                  </Button>
+                  <Button onClick={() => gerarOrdemProducao(itemSelecionado)}>
+                    Gerar Ordem de Produção
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   )
