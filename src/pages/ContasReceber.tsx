@@ -5,8 +5,19 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { CreditCard, Plus, Search, DollarSign, AlertCircle, CheckCircle } from "lucide-react"
+import { CreditCard, Plus, Search, DollarSign, AlertCircle, CheckCircle, Undo2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 interface ContaReceber {
   id: number
@@ -118,6 +129,34 @@ export default function ContasReceber() {
     toast({
       title: "Pagamento registrado",
       description: `Pagamento de ${conta.numeroDocumento} foi registrado com sucesso.`,
+    })
+  }
+
+  const handleEstornarPagamento = (contaId: number) => {
+    const conta = contas.find(c => c.id === contaId)
+    if (!conta) return
+
+    // Determinar o novo status baseado na data de vencimento
+    const hoje = new Date()
+    const dataVencimento = new Date(conta.dataVencimento)
+    const novoStatus = dataVencimento < hoje ? "Vencido" : "Pendente"
+
+    setContas(prev => prev.map(c => 
+      c.id === contaId 
+        ? { 
+            ...c, 
+            status: novoStatus as const,
+            dataPagamento: undefined,
+            valorPago: undefined,
+            formaPagamento: undefined
+          }
+        : c
+    ))
+
+    toast({
+      title: "Pagamento estornado",
+      description: `O pagamento de ${conta.numeroDocumento} foi estornado com sucesso.`,
+      variant: "destructive"
     })
   }
 
@@ -305,14 +344,48 @@ export default function ContasReceber() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {conta.status !== "Pago" && (
-                        <Button
-                          size="sm"
-                          onClick={() => handleReceberPagamento(conta.id)}
-                        >
-                          Receber
-                        </Button>
-                      )}
+                      <div className="flex gap-2">
+                        {conta.status !== "Pago" && (
+                          <Button
+                            size="sm"
+                            onClick={() => handleReceberPagamento(conta.id)}
+                          >
+                            Receber
+                          </Button>
+                        )}
+                        {conta.status === "Pago" && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                              >
+                                <Undo2 className="h-4 w-4 mr-1" />
+                                Estornar
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Confirmar Estorno</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Tem certeza que deseja estornar o pagamento de {conta.numeroDocumento}?
+                                  Esta ação desfará o recebimento de {formatCurrency(conta.valorPago || 0)} e 
+                                  voltará a conta para o status pendente.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction 
+                                  onClick={() => handleEstornarPagamento(conta.id)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Estornar Pagamento
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
