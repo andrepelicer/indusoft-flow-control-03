@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,6 +10,13 @@ import { ContaEdicaoModal } from "@/components/contas-pagar/ContaEdicaoModal"
 import { PagamentoModal } from "@/components/contas-pagar/PagamentoModal"
 import { useToast } from "@/hooks/use-toast"
 
+interface Pagamento {
+  id: number
+  data: string
+  valor: number
+  meioPagamento: string
+}
+
 interface ContaPagar {
   id: number
   fornecedor: string
@@ -18,9 +24,10 @@ interface ContaPagar {
   descricao: string
   vencimento: string
   valor: number
-  status: 'Pendente' | 'Pago' | 'Vencido'
+  status: 'Pendente' | 'Pago' | 'Vencido' | 'Parcial'
   categoria: string
-  dataPagamento?: string
+  valorPago?: number
+  pagamentos?: Pagamento[]
 }
 
 export default function ContasPagar() {
@@ -32,6 +39,15 @@ export default function ContasPagar() {
   const [contaParaPagamento, setContaParaPagamento] = useState<number | null>(null)
   const { toast } = useToast()
   
+  const [meiosPagamento] = useState([
+    { id: 1, nome: "Dinheiro", tipo: "Dinheiro", ativo: true },
+    { id: 2, nome: "PIX", tipo: "PIX", ativo: true },
+    { id: 3, nome: "Cartão de Crédito", tipo: "Cartão de Crédito", ativo: true },
+    { id: 4, nome: "Cartão de Débito", tipo: "Cartão de Débito", ativo: true },
+    { id: 5, nome: "Transferência", tipo: "Transferência", ativo: true },
+    { id: 6, nome: "Boleto", tipo: "Boleto", ativo: true }
+  ])
+  
   const [contas, setContas] = useState<ContaPagar[]>([
     {
       id: 1,
@@ -41,7 +57,9 @@ export default function ContasPagar() {
       vencimento: "2024-01-15",
       valor: 15000.00,
       status: "Pendente",
-      categoria: "Matéria-Prima"
+      categoria: "Matéria-Prima",
+      valorPago: 0,
+      pagamentos: []
     },
     {
       id: 2,
@@ -51,7 +69,9 @@ export default function ContasPagar() {
       vencimento: "2024-01-10",
       valor: 3500.50,
       status: "Vencido",
-      categoria: "Utilidades"
+      categoria: "Utilidades",
+      valorPago: 0,
+      pagamentos: []
     },
     {
       id: 3,
@@ -62,7 +82,15 @@ export default function ContasPagar() {
       valor: 850.00,
       status: "Pago",
       categoria: "Frete",
-      dataPagamento: "2024-01-18"
+      valorPago: 850.00,
+      pagamentos: [
+        {
+          id: 1,
+          data: "2024-01-18",
+          valor: 850.00,
+          meioPagamento: "PIX"
+        }
+      ]
     }
   ])
 
@@ -72,14 +100,15 @@ export default function ContasPagar() {
     conta.descricao.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  const totalPendente = contas.filter(c => c.status === 'Pendente').reduce((sum, c) => sum + c.valor, 0)
-  const totalVencido = contas.filter(c => c.status === 'Vencido').reduce((sum, c) => sum + c.valor, 0)
-  const totalPago = contas.filter(c => c.status === 'Pago').reduce((sum, c) => sum + c.valor, 0)
+  const totalPendente = contas.filter(c => c.status === 'Pendente').reduce((sum, c) => sum + c.valor - (c.valorPago || 0), 0)
+  const totalVencido = contas.filter(c => c.status === 'Vencido').reduce((sum, c) => sum + c.valor - (c.valorPago || 0), 0)
+  const totalPago = contas.filter(c => c.status === 'Pago').reduce((sum, c) => sum + (c.valorPago || 0), 0)
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'Pago': return <CheckCircle className="h-4 w-4" />
       case 'Vencido': return <AlertCircle className="h-4 w-4" />
+      case 'Parcial': return <Clock className="h-4 w-4" />
       default: return <Clock className="h-4 w-4" />
     }
   }
@@ -88,6 +117,7 @@ export default function ContasPagar() {
     switch (status) {
       case 'Pago': return 'default'
       case 'Vencido': return 'destructive'
+      case 'Parcial': return 'secondary'
       default: return 'secondary'
     }
   }
@@ -103,24 +133,55 @@ export default function ContasPagar() {
     setIsDetalhesModalOpen(false)
   }
 
-  const handleConfirmarPagamento = (id: number, dataPagamento: string) => {
-    setContas(contas.map(conta => 
-      conta.id === id ? { ...conta, status: 'Pago' as const, dataPagamento } : conta
-    ))
+  const handleConfirmarPagamento = (id: number, dataPagamento: string, valorPago: number, meioPagamentoId: number) => {
+    const meioPagamento = meiosPagamento.find(m => m.id === meioPagamentoId)
+    
+    setContas(contas.map(conta => {
+      if (conta.id === id) {
+        const novoValorPago = (conta.valorPago || 0) + valorPago
+        const novoPagamento: Pagamento = {
+          id: Date.now(),
+          data: dataPagamento,
+          valor: valorPago,
+          meioPagamento: meioPagamento?.nome || "Não informado"
+        }
+        
+        let novoStatus: 'Pendente' | 'Pago' | 'Vencido' | 'Parcial'
+        if (novoValorPago >= conta.valor) {
+          novoStatus = 'Pago'
+        } else {
+          novoStatus = 'Parcial'
+        }
+        
+        return {
+          ...conta,
+          status: novoStatus,
+          valorPago: novoValorPago,
+          pagamentos: [...(conta.pagamentos || []), novoPagamento]
+        }
+      }
+      return conta
+    }))
+    
     toast({
       title: "Pagamento realizado",
-      description: "A conta foi marcada como paga com sucesso.",
+      description: `Pagamento de ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valorPago)} registrado com sucesso.`,
     })
   }
 
   const handleEstornar = (id: number) => {
     setContas(contas.map(conta => 
-      conta.id === id ? { ...conta, status: 'Pendente' as const, dataPagamento: undefined } : conta
+      conta.id === id ? { 
+        ...conta, 
+        status: 'Pendente' as const, 
+        valorPago: 0,
+        pagamentos: []
+      } : conta
     ))
     setIsDetalhesModalOpen(false)
     toast({
-      title: "Pagamento estornado",
-      description: "O pagamento foi estornado e a conta voltou para pendente.",
+      title: "Pagamentos estornados",
+      description: "Todos os pagamentos foram estornados e a conta voltou para pendente.",
     })
   }
 
@@ -284,6 +345,7 @@ export default function ContasPagar() {
 
       <PagamentoModal
         contaId={contaParaPagamento}
+        contas={contas}
         isOpen={isPagamentoModalOpen}
         onClose={() => setIsPagamentoModalOpen(false)}
         onConfirm={handleConfirmarPagamento}
