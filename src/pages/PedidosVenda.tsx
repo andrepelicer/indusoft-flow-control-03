@@ -44,7 +44,26 @@ const PedidosVenda = () => {
       observacoes: "Entrega em lote único",
       desconto: 2.5,
       valorTotal: 18750.00,
-      itens: []
+      itens: [
+        {
+          id: 1001,
+          produtoId: 1,
+          quantidade: 100,
+          precoUnitario: 120.00,
+          desconto: 0,
+          produto: { id: 1, nome: "Chapa de Aço 1mm", codigo: "CH001", precoVenda: 120.00 },
+          subtotal: 12000.00
+        },
+        {
+          id: 1002,
+          produtoId: 2,
+          quantidade: 150,
+          precoUnitario: 45.50,
+          desconto: 0,
+          produto: { id: 2, nome: "Perfil L 50x50x3", codigo: "PF002", precoVenda: 45.50 },
+          subtotal: 6825.00
+        }
+      ]
     },
     { 
       id: 2, 
@@ -57,7 +76,26 @@ const PedidosVenda = () => {
       observacoes: "Pagamento à vista",
       desconto: 0,
       valorTotal: 9200.00,
-      itens: []
+      itens: [
+        {
+          id: 2001,
+          produtoId: 3,
+          quantidade: 50,
+          precoUnitario: 89.90,
+          desconto: 0,
+          produto: { id: 3, nome: "Tubo Redondo 2\"", codigo: "TR003", precoVenda: 89.90 },
+          subtotal: 4495.00
+        },
+        {
+          id: 2002,
+          produtoId: 4,
+          quantidade: 180,
+          precoUnitario: 25.80,
+          desconto: 0,
+          produto: { id: 4, nome: "Solda Eletrodo 3,25mm", codigo: "SO004", precoVenda: 25.80 },
+          subtotal: 4644.00
+        }
+      ]
     },
     { 
       id: 3, 
@@ -70,7 +108,17 @@ const PedidosVenda = () => {
       observacoes: "Aguardando aprovação do cliente",
       desconto: 5,
       valorTotal: 14300.00,
-      itens: []
+      itens: [
+        {
+          id: 3001,
+          produtoId: 9,
+          quantidade: 80,
+          precoUnitario: 180.00,
+          desconto: 0,
+          produto: { id: 9, nome: "Chapa Galvanizada 2mm", codigo: "CG009", precoVenda: 180.00 },
+          subtotal: 14400.00
+        }
+      ]
     },
   ])
 
@@ -99,28 +147,31 @@ const PedidosVenda = () => {
   const handleSavePedido = (pedidoData: Pedido & { itens: ItemPedidoExpandido[] }) => {
     console.log('Salvando pedido na página principal:', {
       ...pedidoData,
-      totalItens: pedidoData.itens?.length || 0
+      totalItens: pedidoData.itens?.length || 0,
+      itensDetalhes: pedidoData.itens?.map(i => ({ id: i.id, produto: i.produto?.nome, quantidade: i.quantidade }))
     })
     
     if (editingPedido) {
-      // Ao editar, preservar os itens
-      setPedidos(prev => prev.map(p => 
-        p.id === editingPedido.id 
-          ? { 
-              ...pedidoData, 
-              id: editingPedido.id,
-              itens: pedidoData.itens || [] // Garantir que os itens sejam salvos
-            } as PedidoComId 
-          : p
-      ))
-      console.log('Pedido atualizado com', pedidoData.itens?.length || 0, 'itens')
+      // Ao editar, preservar os itens com cuidado especial
+      setPedidos(prev => prev.map(p => {
+        if (p.id === editingPedido.id) {
+          const pedidoAtualizado = { 
+            ...pedidoData, 
+            id: editingPedido.id,
+            itens: pedidoData.itens ? [...pedidoData.itens] : [] // Garantir que os itens sejam copiados
+          } as PedidoComId
+          console.log('Pedido atualizado com sucesso:', pedidoAtualizado.numero, 'com', pedidoAtualizado.itens?.length, 'itens')
+          return pedidoAtualizado
+        }
+        return p
+      }))
     } else {
       // Ao criar novo, incluir os itens
       const newId = Math.max(...pedidos.map(p => p.id)) + 1
       const novoPedido = { 
         ...pedidoData, 
         id: newId,
-        itens: pedidoData.itens || []
+        itens: pedidoData.itens ? [...pedidoData.itens] : []
       } as PedidoComId
       setPedidos(prev => [...prev, novoPedido])
       console.log('Novo pedido criado com', pedidoData.itens?.length || 0, 'itens')
@@ -130,7 +181,13 @@ const PedidosVenda = () => {
 
   const handleEditPedido = (pedido: PedidoComId) => {
     console.log('Iniciando edição do pedido:', pedido.numero, 'com', pedido.itens?.length || 0, 'itens')
-    setEditingPedido(pedido)
+    console.log('Itens do pedido:', pedido.itens)
+    // Garantir que o pedido tem uma cópia dos itens
+    const pedidoParaEdicao = {
+      ...pedido,
+      itens: pedido.itens ? [...pedido.itens] : []
+    }
+    setEditingPedido(pedidoParaEdicao)
     setFormOpen(true)
   }
 

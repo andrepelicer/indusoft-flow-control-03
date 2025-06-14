@@ -1,4 +1,3 @@
-
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
@@ -62,11 +61,19 @@ export function PedidoVendaForm({ open, onOpenChange, pedido, onSave }: PedidoVe
   useEffect(() => {
     if (open) {
       if (pedido) {
-        console.log('Carregando pedido para edição:', pedido)
+        console.log('Carregando pedido para edição:', pedido.numero, 'com', pedido.itens?.length || 0, 'itens')
+        console.log('Detalhes dos itens:', pedido.itens)
         isEditingRef.current = true
         form.reset(pedido)
-        // Preservar os itens do pedido
-        setItens(pedido.itens || [])
+        // Preservar os itens do pedido - fazer uma cópia profunda
+        if (pedido.itens && pedido.itens.length > 0) {
+          const itensCopiados = pedido.itens.map(item => ({ ...item }))
+          setItens(itensCopiados)
+          console.log('Itens carregados no formulário:', itensCopiados.length)
+        } else {
+          setItens([])
+          console.log('Nenhum item encontrado no pedido')
+        }
       } else {
         console.log('Criando novo pedido')
         isEditingRef.current = false
@@ -88,6 +95,7 @@ export function PedidoVendaForm({ open, onOpenChange, pedido, onSave }: PedidoVe
 
   const handleItensChange = useCallback((novosItens: ItemPedidoExpandido[]) => {
     console.log('Atualizando itens do pedido:', novosItens.length, 'itens')
+    console.log('Novos itens detalhes:', novosItens.map(i => ({ id: i.id, produto: i.produto?.nome, quantidade: i.quantidade })))
     setItens(novosItens)
   }, [])
 
@@ -121,13 +129,17 @@ export function PedidoVendaForm({ open, onOpenChange, pedido, onSave }: PedidoVe
       return
     }
 
-    // Garantir que os itens estão incluídos no pedido
+    // Garantir que os itens estão incluídos no pedido - fazer cópia profunda
     const pedidoComItens = { 
       ...data, 
-      itens: [...itens] // Criar uma nova array para evitar referências
+      itens: itens.map(item => ({ ...item })) // Criar uma nova array com cópias dos itens
     }
     
-    console.log('Salvando pedido final:', pedidoComItens)
+    console.log('Salvando pedido final:', {
+      ...pedidoComItens,
+      totalItens: pedidoComItens.itens.length,
+      itensDetalhes: pedidoComItens.itens.map(i => ({ id: i.id, produto: i.produto?.nome, quantidade: i.quantidade }))
+    })
     onSave(pedidoComItens)
     
     toast({
@@ -137,12 +149,11 @@ export function PedidoVendaForm({ open, onOpenChange, pedido, onSave }: PedidoVe
     onOpenChange(false)
   }
 
-  // Resetar quando o modal fecha
+  // Não resetar os itens quando o modal fecha para evitar perda de dados
   useEffect(() => {
-    if (!open) {
-      console.log('Modal fechado, limpando estado')
+    if (!open && !isEditingRef.current) {
+      console.log('Modal fechado, limpando estado apenas se não estiver editando')
       setItens([])
-      isEditingRef.current = false
     }
   }, [open])
 
