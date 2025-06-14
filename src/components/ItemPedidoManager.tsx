@@ -130,6 +130,7 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
   }
 
   const selecionarProduto = (produto: typeof produtosMock[0]) => {
+    console.log('Produto selecionado:', produto)
     setNovoItem({
       ...novoItem,
       produtoId: produto.id,
@@ -166,6 +167,9 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
     produto.codigo.toLowerCase().includes(searchValue.toLowerCase())
   )
 
+  console.log('Search value:', searchValue)
+  console.log('Produtos filtrados:', produtosFiltrados)
+
   return (
     <Card>
       <CardHeader>
@@ -188,11 +192,14 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-[400px] p-0" align="start">
-                <Command>
+                <Command shouldFilter={false}>
                   <CommandInput 
                     placeholder="Digite o nome ou código do produto..." 
                     value={searchValue}
-                    onValueChange={setSearchValue}
+                    onValueChange={(value) => {
+                      console.log('CommandInput value changed:', value)
+                      setSearchValue(value)
+                    }}
                   />
                   <CommandList>
                     <CommandEmpty>Nenhum produto encontrado.</CommandEmpty>
