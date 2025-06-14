@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Layout } from "./components/Layout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Empresa from "./pages/Empresa";
@@ -26,31 +27,89 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/empresa" element={<Empresa />} />
-          <Route path="/usuarios" element={<Usuarios />} />
-          <Route path="/clientes" element={<Clientes />} />
-          <Route path="/fornecedores" element={<Fornecedores />} />
-          <Route path="/produtos" element={<Produtos />} />
-          <Route path="/vendedores" element={<Vendedores />} />
-          <Route path="/tabela-precos" element={<TabelaPrecos />} />
-          <Route path="/orcamentos" element={<Orcamentos />} />
-          <Route path="/pedidos-venda" element={<PedidosVenda />} />
-          <Route path="/faturamento" element={<Faturamento />} />
-          {/* Rotas placeholder para módulos ainda não implementados */}
-          <Route path="/pedidos-compra" element={<div className="p-8">Módulo de Pedidos de Compra - Em desenvolvimento</div>} />
-          <Route path="/contas-receber" element={<div className="p-8">Módulo de Contas a Receber - Em desenvolvimento</div>} />
-          <Route path="/contas-pagar" element={<div className="p-8">Módulo de Contas a Pagar - Em desenvolvimento</div>} />
-          <Route path="/conta-corrente" element={<div className="p-8">Módulo de Conta Corrente - Em desenvolvimento</div>} />
-          <Route path="/fluxo-caixa" element={<div className="p-8">Módulo de Fluxo de Caixa - Em desenvolvimento</div>} />
-          <Route path="/ordens-producao" element={<div className="p-8">Módulo de Ordens de Produção - Em desenvolvimento</div>}  />
-          <Route path="/conferencia" element={<div className="p-8">Módulo de Conferência - Em desenvolvimento</div>} />
-          <Route path="/configuracoes" element={<div className="p-8">Módulo de Configurações - Em desenvolvimento</div>} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <Layout>
+          <Routes>
+            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/empresa" element={<Empresa />} />
+            <Route path="/usuarios" element={<Usuarios />} />
+            <Route path="/clientes" element={<Clientes />} />
+            <Route path="/fornecedores" element={<Fornecedores />} />
+            <Route path="/produtos" element={<Produtos />} />
+            <Route path="/vendedores" element={<Vendedores />} />
+            <Route path="/tabela-precos" element={<TabelaPrecos />} />
+            <Route path="/orcamentos" element={<Orcamentos />} />
+            <Route path="/pedidos-venda" element={<PedidosVenda />} />
+            <Route path="/faturamento" element={<Faturamento />} />
+            {/* Rotas placeholder para módulos ainda não implementados */}
+            <Route path="/pedidos-compra" element={
+              <div className="flex items-center justify-center min-h-[400px]">
+                <div className="text-center">
+                  <h2 className="text-2xl font-bold mb-2">Módulo de Pedidos de Compra</h2>
+                  <p className="text-muted-foreground">Em desenvolvimento</p>
+                </div>
+              </div>
+            } />
+            <Route path="/contas-receber" element={
+              <div className="flex items-center justify-center min-h-[400px]">
+                <div className="text-center">
+                  <h2 className="text-2xl font-bold mb-2">Módulo de Contas a Receber</h2>
+                  <p className="text-muted-foreground">Em desenvolvimento</p>
+                </div>
+              </div>
+            } />
+            <Route path="/contas-pagar" element={
+              <div className="flex items-center justify-center min-h-[400px]">
+                <div className="text-center">
+                  <h2 className="text-2xl font-bold mb-2">Módulo de Contas a Pagar</h2>
+                  <p className="text-muted-foreground">Em desenvolvimento</p>
+                </div>
+              </div>
+            } />
+            <Route path="/conta-corrente" element={
+              <div className="flex items-center justify-center min-h-[400px]">
+                <div className="text-center">
+                  <h2 className="text-2xl font-bold mb-2">Módulo de Conta Corrente</h2>
+                  <p className="text-muted-foreground">Em desenvolvimento</p>
+                </div>
+              </div>
+            } />
+            <Route path="/fluxo-caixa" element={
+              <div className="flex items-center justify-center min-h-[400px]">
+                <div className="text-center">
+                  <h2 className="text-2xl font-bold mb-2">Módulo de Fluxo de Caixa</h2>
+                  <p className="text-muted-foreground">Em desenvolvimento</p>
+                </div>
+              </div>
+            } />
+            <Route path="/ordens-producao" element={
+              <div className="flex items-center justify-center min-h-[400px]">
+                <div className="text-center">
+                  <h2 className="text-2xl font-bold mb-2">Módulo de Ordens de Produção</h2>
+                  <p className="text-muted-foreground">Em desenvolvimento</p>
+                </div>
+              </div>
+            } />
+            <Route path="/conferencia" element={
+              <div className="flex items-center justify-center min-h-[400px]">
+                <div className="text-center">
+                  <h2 className="text-2xl font-bold mb-2">Módulo de Conferência</h2>
+                  <p className="text-muted-foreground">Em desenvolvimento</p>
+                </div>
+              </div>
+            } />
+            <Route path="/configuracoes" element={
+              <div className="flex items-center justify-center min-h-[400px]">
+                <div className="text-center">
+                  <h2 className="text-2xl font-bold mb-2">Módulo de Configurações</h2>
+                  <p className="text-muted-foreground">Em desenvolvimento</p>
+                </div>
+              </div>
+            } />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Layout>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

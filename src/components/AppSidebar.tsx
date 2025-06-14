@@ -10,9 +10,11 @@ import {
   SidebarMenuItem,
   SidebarHeader,
   SidebarFooter,
+  SidebarTrigger,
 } from "@/components/ui/sidebar"
-import { Building2, Users, Package, ShoppingCart, CreditCard, Factory, BarChart3, Settings, DollarSign, UserCheck } from "lucide-react"
+import { Building2, Users, Package, ShoppingCart, CreditCard, Factory, BarChart3, Settings, PanelLeftClose } from "lucide-react"
 import { Link } from "react-router-dom"
+import { Button } from "@/components/ui/button"
 
 const menuItems = [
   {
@@ -76,14 +78,17 @@ const menuItems = [
 
 export function AppSidebar() {
   return (
-    <Sidebar className="border-r border-border">
+    <Sidebar className="border-r border-border" collapsible="icon">
       <SidebarHeader className="border-b border-border p-4">
-        <div className="flex items-center gap-2">
-          <Factory className="h-8 w-8 text-primary" />
-          <div>
-            <h1 className="text-lg font-bold text-foreground">InduSoft</h1>
-            <p className="text-xs text-muted-foreground">ERP Industrial</p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
+            <Factory className="h-8 w-8 text-primary flex-shrink-0" />
+            <div className="group-data-[collapsible=icon]:hidden">
+              <h1 className="text-lg font-bold text-foreground">InduSoft</h1>
+              <p className="text-xs text-muted-foreground">ERP Industrial</p>
+            </div>
           </div>
+          <SidebarTrigger className="group-data-[collapsible=icon]:hidden" />
         </div>
       </SidebarHeader>
       
@@ -94,7 +99,7 @@ export function AppSidebar() {
               <>
                 <SidebarGroupLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   <item.icon className="h-4 w-4 mr-2" />
-                  {item.title}
+                  <span className="group-data-[collapsible=icon]:hidden">{item.title}</span>
                 </SidebarGroupLabel>
                 <SidebarGroupContent>
                   <SidebarMenu>
@@ -102,7 +107,7 @@ export function AppSidebar() {
                       <SidebarMenuItem key={subItem.title}>
                         <SidebarMenuButton asChild className="text-sm">
                           <Link to={subItem.url}>
-                            <span>{subItem.title}</span>
+                            <span className="group-data-[collapsible=icon]:sr-only">{subItem.title}</span>
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
@@ -116,7 +121,7 @@ export function AppSidebar() {
                   <SidebarMenuButton asChild className="text-sm font-medium">
                     <Link to={item.url}>
                       <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
+                      <span className="group-data-[collapsible=icon]:sr-only">{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -127,9 +132,9 @@ export function AppSidebar() {
       </SidebarContent>
       
       <SidebarFooter className="border-t border-border p-4">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Users className="h-4 w-4" />
-          <span>Admin User</span>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground group-data-[collapsible=icon]:justify-center">
+          <Users className="h-4 w-4 flex-shrink-0" />
+          <span className="group-data-[collapsible=icon]:hidden">Admin User</span>
         </div>
       </SidebarFooter>
     </Sidebar>

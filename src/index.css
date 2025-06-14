@@ -75,6 +75,36 @@
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Responsividade melhorada para mobile */
+  @media (max-width: 768px) {
+    .container {
+      @apply px-4;
+    }
+    
+    /* Ajustes para tabelas em dispositivos móveis */
+    .table-responsive {
+      @apply overflow-x-auto;
+    }
+    
+    .table-responsive table {
+      @apply min-w-full;
+    }
+    
+    /* Formulários responsivos */
+    .form-grid {
+      @apply grid-cols-1 sm:grid-cols-2;
+    }
+    
+    .form-grid-3 {
+      @apply grid-cols-1 sm:grid-cols-2 lg:grid-cols-3;
+    }
+    
+    /* Cards responsivos */
+    .card-grid {
+      @apply grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+    }
+  }
 }
 
 /* Estilos personalizados para o ERP Industrial */
@@ -88,4 +118,35 @@
 
 .dashboard-card {
   @apply bg-card border border-border rounded-lg shadow-sm hover:shadow-md transition-shadow;
+}
+
+/* Animações para o sidebar */
+.sidebar-transition {
+  @apply transition-all duration-200 ease-in-out;
+}
+
+/* Melhorias de responsividade */
+@media (max-width: 640px) {
+  .mobile-hidden {
+    @apply hidden;
+  }
+  
+  .mobile-full {
+    @apply w-full;
+  }
+  
+  .mobile-stack {
+    @apply flex-col space-y-2 space-x-0;
+  }
+}
+
+/* Ajustes para impressão */
+@media print {
+  .no-print {
+    @apply hidden;
+  }
+  
+  .sidebar {
+    @apply hidden;
+  }
 }
