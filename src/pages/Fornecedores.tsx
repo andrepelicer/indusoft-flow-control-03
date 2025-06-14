@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -7,9 +6,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Building2, Plus, Search, Star, MapPin, Phone, Mail, FileText } from "lucide-react"
-import FornecedoresStats from "@/components/fornecedores/FornecedoresStats"
-import FornecedoresFilters from "@/components/fornecedores/FornecedoresFilters"
-import FornecedoresTable from "@/components/fornecedores/FornecedoresTable"
+import { FornecedoresStats } from "@/components/fornecedores/FornecedoresStats"
+import { FornecedoresFilters } from "@/components/fornecedores/FornecedoresFilters"
+import { FornecedoresTable } from "@/components/fornecedores/FornecedoresTable"
 
 export interface FornecedorComId {
   id: number
@@ -165,17 +164,13 @@ export default function Fornecedores() {
           
           <FornecedoresFilters
             searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            statusFilter={statusFilter}
-            setStatusFilter={setStatusFilter}
-            categoriaFilter={categoriaFilter}
-            setCategoriaFilter={setCategoriaFilter}
+            onSearchChange={setSearchTerm}
           />
 
           <FornecedoresTable
             fornecedores={filteredFornecedores}
             onEdit={handleEditFornecedor}
-            onViewDetails={handleViewDetails}
+            onDelete={(id) => console.log("Delete fornecedor:", id)}
           />
         </TabsContent>
         
