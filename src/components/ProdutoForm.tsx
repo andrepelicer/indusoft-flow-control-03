@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/select"
 import { produtoSchema, type Produto } from "@/lib/validations"
 import { useToast } from "@/hooks/use-toast"
+import { useEffect } from "react"
 
 interface ProdutoFormProps {
   open: boolean
@@ -41,7 +42,7 @@ export function ProdutoForm({ open, onOpenChange, produto, onSave }: ProdutoForm
   
   const form = useForm<Produto>({
     resolver: zodResolver(produtoSchema),
-    defaultValues: produto || {
+    defaultValues: {
       codigo: "",
       nome: "",
       categoria: "",
@@ -55,6 +56,25 @@ export function ProdutoForm({ open, onOpenChange, produto, onSave }: ProdutoForm
     }
   })
 
+  useEffect(() => {
+    if (produto) {
+      form.reset(produto)
+    } else {
+      form.reset({
+        codigo: "",
+        nome: "",
+        categoria: "",
+        unidade: "",
+        precoVenda: 0,
+        custoProducao: 0,
+        estoque: 0,
+        estoqueMinimo: 0,
+        status: "Ativo",
+        temFichaTecnica: false
+      })
+    }
+  }, [produto, form])
+
   const onSubmit = (data: Produto) => {
     onSave(data)
     toast({
@@ -62,7 +82,6 @@ export function ProdutoForm({ open, onOpenChange, produto, onSave }: ProdutoForm
       description: "As informações foram salvas com sucesso.",
     })
     onOpenChange(false)
-    form.reset()
   }
 
   return (
@@ -130,7 +149,7 @@ export function ProdutoForm({ open, onOpenChange, produto, onSave }: ProdutoForm
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Unidade</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione a unidade" />
@@ -242,7 +261,7 @@ export function ProdutoForm({ open, onOpenChange, produto, onSave }: ProdutoForm
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Status</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione o status" />

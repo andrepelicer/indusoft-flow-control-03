@@ -17,108 +17,103 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { SidebarProvider } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/AppSidebar"
+import { TabelaPrecosForm } from "@/components/TabelaPrecosForm"
 import { useToast } from "@/hooks/use-toast"
-import { Search, Plus, Edit, Trash2, D​ollarSign, Package } from "lucide-react"
+import { Search, Plus, Edit, Trash2, DollarSign, Package } from "lucide-react"
+import type { TabelaPreco, ItemTabelaPreco } from "@/lib/validations"
 
-interface TabelaPreco {
-  id: number
-  nome: string
-  descricao?: string
-  ativa: boolean
-  dataInicio: string
-  dataFim?: string
-  itens: ItemTabelaPreco[]
-}
-
-interface ItemTabelaPreco {
-  id: number
-  produtoNome: string
-  produtoCodigo: string
-  preco: number
-  desconto?: number
-  precoFinal: number
-}
+type TabelaPrecoWithId = TabelaPreco & { id: number; itens?: ItemTabelaPrecoWithId[] }
+type ItemTabelaPrecoWithId = ItemTabelaPreco & { id: number; produtoNome: string }
 
 export default function TabelaPrecos() {
   const { toast } = useToast()
-  const [tabelas, setTabelas] = useState<TabelaPreco[]>([
+  const [tabelas, setTabelas] = useState<TabelaPrecoWithId[]>([
     {
       id: 1,
       nome: "Tabela Padrão",
-      descricao: "Preços padrão para vendas",
+      descricao: "Preços padrão para clientes regulares",
       ativa: true,
       dataInicio: "2024-01-01",
+      dataFim: "2024-12-31",
       itens: [
-        {
-          id: 1,
-          produtoNome: "Produto A",
-          produtoCodigo: "PA001",
-          preco: 100.00,
-          desconto: 0,
-          precoFinal: 100.00
-        },
-        {
-          id: 2,
-          produtoNome: "Produto B",
-          produtoCodigo: "PB002",
-          preco: 250.00,
-          desconto: 10,
-          precoFinal: 225.00
-        }
+        { id: 1, produtoId: 1, produtoNome: "Chapa de Aço", preco: 85.50, desconto: 0 },
+        { id: 2, produtoId: 2, produtoNome: "Parafuso Allen", preco: 2.50, desconto: 5 }
       ]
     },
     {
       id: 2,
       nome: "Tabela Promocional",
-      descricao: "Preços especiais para promoção",
+      descricao: "Preços promocionais para grandes volumes",
       ativa: false,
       dataInicio: "2024-06-01",
       dataFim: "2024-06-30",
-      itens: [
-        {
-          id: 3,
-          produtoNome: "Produto A",
-          produtoCodigo: "PA001",
-          preco: 100.00,
-          desconto: 20,
-          precoFinal: 80.00
-        }
-      ]
+      itens: []
     }
   ])
 
   const [searchTerm, setSearchTerm] = useState("")
-  const [selectedTabela, setSelectedTabela] = useState<TabelaPreco | null>(null)
+  const [isFormOpen, setIsFormOpen] = useState(false)
+  const [selectedTabela, setSelectedTabela] = useState<TabelaPrecoWithId | undefined>()
+  const [tabelaToDelete, setTabelaToDelete] = useState<TabelaPrecoWithId | null>(null)
 
   const filteredTabelas = tabelas.filter(tabela =>
     tabela.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (tabela.descricao && tabela.descricao.toLowerCase().includes(searchTerm.toLowerCase()))
   )
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value)
+  const handleSaveTabela = (tabelaData: TabelaPreco) => {
+    if (selectedTabela) {
+      setTabelas(prev => prev.map(t => 
+        t.id === selectedTabela.id 
+          ? { ...tabelaData, id: selectedTabela.id, itens: selectedTabela.itens || [] }
+          : t
+      ))
+    } else {
+      const newTabela = {
+        ...tabelaData,
+        id: Math.max(0, ...tabelas.map(t => t.id)) + 1,
+        itens: []
+      }
+      setTabelas(prev => [...prev, newTabela])
+    }
+    setSelectedTabela(undefined)
+  }
+
+  const handleEditTabela = (tabela: TabelaPrecoWithId) => {
+    setSelectedTabela(tabela)
+    setIsFormOpen(true)
+  }
+
+  const handleDeleteTabela = (tabela: TabelaPrecoWithId) => {
+    setTabelaToDelete(tabela)
+  }
+
+  const confirmDelete = () => {
+    if (tabelaToDelete) {
+      setTabelas(prev => prev.filter(t => t.id !== tabelaToDelete.id))
+      toast({
+        title: "Tabela removida",
+        description: "A tabela de preços foi removida com sucesso.",
+      })
+      setTabelaToDelete(null)
+    }
   }
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pt-BR')
-  }
-
-  const toggleTabelaStatus = (id: number) => {
-    setTabelas(prev => prev.map(tabela => 
-      tabela.id === id ? { ...tabela, ativa: !tabela.ativa } : tabela
-    ))
-    
-    const tabela = tabelas.find(t => t.id === id)
-    toast({
-      title: `Tabela ${tabela?.ativa ? 'desativada' : 'ativada'}`,
-      description: `A tabela "${tabela?.nome}" foi ${tabela?.ativa ? 'desativada' : 'ativada'} com sucesso.`,
-    })
   }
 
   return (
@@ -130,169 +125,132 @@ export default function TabelaPrecos() {
           <p className="text-gray-600">Gerencie as tabelas de preços dos produtos</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Lista de Tabelas */}
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <DollarSign className="h-5 w-5" />
-                    Tabelas de Preços
-                  </CardTitle>
-                  <CardDescription>
-                    {tabelas.length} tabela(s) cadastrada(s)
-                  </CardDescription>
-                </div>
-                <Button size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nova Tabela
-                </Button>
+        <Card>
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="h-5 w-5" />
+                  Lista de Tabelas de Preços
+                </CardTitle>
+                <CardDescription>
+                  {tabelas.length} tabela(s) cadastrada(s)
+                </CardDescription>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="mb-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="Buscar tabelas..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
+              <Button onClick={() => {
+                setSelectedTabela(undefined)
+                setIsFormOpen(true)
+              }}>
+                <Plus className="h-4 w-4 mr-2" />
+                Nova Tabela
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="mb-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Buscar por nome ou descrição..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
               </div>
+            </div>
 
-              <div className="space-y-3">
-                {filteredTabelas.map((tabela) => (
-                  <div
-                    key={tabela.id}
-                    className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                      selectedTabela?.id === tabela.id 
-                        ? 'border-primary bg-primary/5' 
-                        : 'hover:border-gray-300'
-                    }`}
-                    onClick={() => setSelectedTabela(tabela)}
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-semibold">{tabela.nome}</h3>
-                      <Badge variant={tabela.ativa ? "default" : "secondary"}>
-                        {tabela.ativa ? "Ativa" : "Inativa"}
-                      </Badge>
-                    </div>
-                    {tabela.descricao && (
-                      <p className="text-sm text-gray-600 mb-2">{tabela.descricao}</p>
-                    )}
-                    <div className="flex justify-between items-center text-sm text-gray-500">
-                      <span>Início: {formatDate(tabela.dataInicio)}</span>
-                      <span>{tabela.itens.length} produto(s)</span>
-                    </div>
-                    {tabela.dataFim && (
-                      <div className="text-sm text-gray-500">
-                        Fim: {formatDate(tabela.dataFim)}
-                      </div>
-                    )}
-                    <div className="flex gap-2 mt-3">
-                      <Button size="sm" variant="outline">
-                        <Edit className="h-3 w-3 mr-1" />
-                        Editar
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant={tabela.ativa ? "secondary" : "default"}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          toggleTabelaStatus(tabela.id)
-                        }}
-                      >
-                        {tabela.ativa ? "Desativar" : "Ativar"}
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+            <div className="border rounded-md">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Descrição</TableHead>
+                    <TableHead>Período</TableHead>
+                    <TableHead>Itens</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredTabelas.map((tabela) => (
+                    <TableRow key={tabela.id}>
+                      <TableCell className="font-medium">{tabela.nome}</TableCell>
+                      <TableCell>{tabela.descricao || "-"}</TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <div>{formatDate(tabela.dataInicio)}</div>
+                          {tabela.dataFim && (
+                            <div className="text-gray-500">até {formatDate(tabela.dataFim)}</div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Package className="h-4 w-4" />
+                          {tabela.itens?.length || 0} produtos
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={tabela.ativa ? "default" : "secondary"}>
+                          {tabela.ativa ? "Ativa" : "Inativa"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEditTabela(tabela)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeleteTabela(tabela)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            {filteredTabelas.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                Nenhuma tabela encontrada.
               </div>
-            </CardContent>
-          </Card>
+            )}
+          </CardContent>
+        </Card>
 
-          {/* Detalhes da Tabela Selecionada */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5" />
-                Produtos da Tabela
-              </CardTitle>
-              <CardDescription>
-                {selectedTabela 
-                  ? `Preços da tabela "${selectedTabela.nome}"`
-                  : "Selecione uma tabela para ver os produtos"
-                }
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {selectedTabela ? (
-                <div>
-                  <div className="mb-4 flex justify-between items-center">
-                    <div className="text-sm text-gray-600">
-                      {selectedTabela.itens.length} produto(s) na tabela
-                    </div>
-                    <Button size="sm">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Adicionar Produto
-                    </Button>
-                  </div>
+        <TabelaPrecosForm
+          open={isFormOpen}
+          onOpenChange={setIsFormOpen}
+          tabela={selectedTabela}
+          onSave={handleSaveTabela}
+        />
 
-                  <div className="border rounded-md">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Produto</TableHead>
-                          <TableHead>Preço</TableHead>
-                          <TableHead>Desconto</TableHead>
-                          <TableHead>Final</TableHead>
-                          <TableHead>Ações</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {selectedTabela.itens.map((item) => (
-                          <TableRow key={item.id}>
-                            <TableCell>
-                              <div>
-                                <div className="font-medium">{item.produtoNome}</div>
-                                <div className="text-sm text-gray-500">{item.produtoCodigo}</div>
-                              </div>
-                            </TableCell>
-                            <TableCell>{formatCurrency(item.preco)}</TableCell>
-                            <TableCell>
-                              {item.desconto ? `${item.desconto}%` : "-"}
-                            </TableCell>
-                            <TableCell className="font-medium">
-                              {formatCurrency(item.precoFinal)}
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <Button variant="outline" size="sm">
-                                  <Edit className="h-3 w-3" />
-                                </Button>
-                                <Button variant="outline" size="sm">
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Selecione uma tabela para visualizar os produtos e preços</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+        <AlertDialog open={!!tabelaToDelete} onOpenChange={() => setTabelaToDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir a tabela "{tabelaToDelete?.nome}"? 
+                Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmDelete}>
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </main>
     </SidebarProvider>
   )

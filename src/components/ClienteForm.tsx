@@ -3,7 +3,6 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import {
   Dialog,
   DialogContent,
@@ -28,6 +27,7 @@ import {
 } from "@/components/ui/select"
 import { clienteSchema, type Cliente } from "@/lib/validations"
 import { useToast } from "@/hooks/use-toast"
+import { useEffect } from "react"
 
 interface ClienteFormProps {
   open: boolean
@@ -41,7 +41,7 @@ export function ClienteForm({ open, onOpenChange, cliente, onSave }: ClienteForm
   
   const form = useForm<Cliente>({
     resolver: zodResolver(clienteSchema),
-    defaultValues: cliente || {
+    defaultValues: {
       nome: "",
       tipo: "PF",
       documento: "",
@@ -53,6 +53,23 @@ export function ClienteForm({ open, onOpenChange, cliente, onSave }: ClienteForm
     }
   })
 
+  useEffect(() => {
+    if (cliente) {
+      form.reset(cliente)
+    } else {
+      form.reset({
+        nome: "",
+        tipo: "PF",
+        documento: "",
+        email: "",
+        telefone: "",
+        cidade: "",
+        limiteCredito: 0,
+        status: "Ativo"
+      })
+    }
+  }, [cliente, form])
+
   const onSubmit = (data: Cliente) => {
     onSave(data)
     toast({
@@ -60,7 +77,6 @@ export function ClienteForm({ open, onOpenChange, cliente, onSave }: ClienteForm
       description: "As informações foram salvas com sucesso.",
     })
     onOpenChange(false)
-    form.reset()
   }
 
   return (
@@ -98,7 +114,7 @@ export function ClienteForm({ open, onOpenChange, cliente, onSave }: ClienteForm
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Tipo</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione o tipo" />
@@ -185,6 +201,7 @@ export function ClienteForm({ open, onOpenChange, cliente, onSave }: ClienteForm
                     <FormControl>
                       <Input 
                         type="number" 
+                        step="0.01"
                         placeholder="0.00" 
                         {...field}
                         onChange={e => field.onChange(Number(e.target.value))}
@@ -201,7 +218,7 @@ export function ClienteForm({ open, onOpenChange, cliente, onSave }: ClienteForm
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Status</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione o status" />

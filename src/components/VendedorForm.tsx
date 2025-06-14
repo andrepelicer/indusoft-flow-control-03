@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/select"
 import { vendedorSchema, type Vendedor } from "@/lib/validations"
 import { useToast } from "@/hooks/use-toast"
+import { useEffect } from "react"
 
 interface VendedorFormProps {
   open: boolean
@@ -40,7 +41,7 @@ export function VendedorForm({ open, onOpenChange, vendedor, onSave }: VendedorF
   
   const form = useForm<Vendedor>({
     resolver: zodResolver(vendedorSchema),
-    defaultValues: vendedor || {
+    defaultValues: {
       nome: "",
       cpf: "",
       email: "",
@@ -51,6 +52,22 @@ export function VendedorForm({ open, onOpenChange, vendedor, onSave }: VendedorF
     }
   })
 
+  useEffect(() => {
+    if (vendedor) {
+      form.reset(vendedor)
+    } else {
+      form.reset({
+        nome: "",
+        cpf: "",
+        email: "",
+        telefone: "",
+        comissao: 5,
+        status: "Ativo",
+        dataAdmissao: new Date().toISOString().split('T')[0]
+      })
+    }
+  }, [vendedor, form])
+
   const onSubmit = (data: Vendedor) => {
     onSave(data)
     toast({
@@ -58,7 +75,6 @@ export function VendedorForm({ open, onOpenChange, vendedor, onSave }: VendedorF
       description: "As informações foram salvas com sucesso.",
     })
     onOpenChange(false)
-    form.reset()
   }
 
   return (
@@ -145,6 +161,7 @@ export function VendedorForm({ open, onOpenChange, vendedor, onSave }: VendedorF
                     <FormControl>
                       <Input 
                         type="number" 
+                        step="0.01"
                         placeholder="5.00" 
                         {...field}
                         onChange={(e) => field.onChange(Number(e.target.value))} 

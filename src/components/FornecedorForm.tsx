@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/select"
 import { fornecedorSchema, type Fornecedor } from "@/lib/validations"
 import { useToast } from "@/hooks/use-toast"
+import { useEffect } from "react"
 
 interface FornecedorFormProps {
   open: boolean
@@ -40,7 +41,7 @@ export function FornecedorForm({ open, onOpenChange, fornecedor, onSave }: Forne
   
   const form = useForm<Fornecedor>({
     resolver: zodResolver(fornecedorSchema),
-    defaultValues: fornecedor || {
+    defaultValues: {
       nome: "",
       cnpj: "",
       categoria: "",
@@ -52,6 +53,23 @@ export function FornecedorForm({ open, onOpenChange, fornecedor, onSave }: Forne
     }
   })
 
+  useEffect(() => {
+    if (fornecedor) {
+      form.reset(fornecedor)
+    } else {
+      form.reset({
+        nome: "",
+        cnpj: "",
+        categoria: "",
+        email: "",
+        telefone: "",
+        cidade: "",
+        avaliacao: 5,
+        status: "Ativo"
+      })
+    }
+  }, [fornecedor, form])
+
   const onSubmit = (data: Fornecedor) => {
     onSave(data)
     toast({
@@ -59,7 +77,6 @@ export function FornecedorForm({ open, onOpenChange, fornecedor, onSave }: Forne
       description: "As informações foram salvas com sucesso.",
     })
     onOpenChange(false)
-    form.reset()
   }
 
   return (
