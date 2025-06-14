@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -18,6 +19,9 @@ import PedidosVenda from "./pages/PedidosVenda";
 import Faturamento from "./pages/Faturamento";
 import PedidosCompra from "./pages/PedidosCompra";
 import ContasReceber from "./pages/ContasReceber";
+import ContasPagar from "./pages/ContasPagar";
+import ContaCorrente from "./pages/ContaCorrente";
+import FluxoCaixa from "./pages/FluxoCaixa";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();

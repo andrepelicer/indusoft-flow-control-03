@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button"
 import { Truck, Plus } from "lucide-react"
 import { useState } from "react"
@@ -19,7 +18,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 
-type FornecedorComId = Fornecedor & { id: number }
+type FornecedorComId = Fornecedor & { 
+  id: number
+  avaliacao: number
+}
 
 const Fornecedores = () => {
   const [searchTerm, setSearchTerm] = useState("")
@@ -74,11 +76,11 @@ const Fornecedores = () => {
   const handleSaveFornecedor = (fornecedorData: Fornecedor) => {
     if (editingFornecedor) {
       setFornecedores(prev => prev.map(f => 
-        f.id === editingFornecedor.id ? { ...fornecedorData, id: editingFornecedor.id } as FornecedorComId : f
+        f.id === editingFornecedor.id ? { ...fornecedorData, id: editingFornecedor.id, avaliacao: editingFornecedor.avaliacao } as FornecedorComId : f
       ))
     } else {
       const newId = Math.max(...fornecedores.map(f => f.id)) + 1
-      setFornecedores(prev => [...prev, { ...fornecedorData, id: newId } as FornecedorComId])
+      setFornecedores(prev => [...prev, { ...fornecedorData, id: newId, avaliacao: 0 } as FornecedorComId])
     }
     setEditingFornecedor(undefined)
   }
