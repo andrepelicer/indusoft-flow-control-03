@@ -258,7 +258,8 @@ export function OrcamentoForm({ open, onOpenChange, orcamento, onSave }: Orcamen
                         placeholder="0.00" 
                         {...field}
                         onChange={(e) => {
-                          field.onChange(Number(e.target.value))
+                          const value = Number(e.target.value)
+                          field.onChange(value)
                           handleTotalChange(itens.reduce((sum, item) => sum + (item.subtotal || 0), 0))
                         }} 
                       />
