@@ -79,15 +79,15 @@ export function AppSidebar() {
   return (
     <Sidebar className="border-r border-border" collapsible="icon">
       <SidebarHeader className="border-b border-border p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
-            <Factory className="h-8 w-8 text-primary flex-shrink-0" />
-            <div className="group-data-[collapsible=icon]:hidden">
-              <h1 className="text-lg font-bold text-foreground">InduSoft</h1>
-              <p className="text-xs text-muted-foreground">ERP Industrial</p>
-            </div>
+        <div className="flex items-center justify-center group-data-[collapsible=icon]:justify-center">
+          <Factory className="h-8 w-8 text-primary flex-shrink-0" />
+          <div className="ml-2 group-data-[collapsible=icon]:hidden">
+            <h1 className="text-lg font-bold text-foreground">InduSoft</h1>
+            <p className="text-xs text-muted-foreground">ERP Industrial</p>
           </div>
-          <SidebarTrigger className="group-data-[collapsible=icon]:hidden" />
+        </div>
+        <div className="mt-4 flex justify-center">
+          <SidebarTrigger />
         </div>
       </SidebarHeader>
       
