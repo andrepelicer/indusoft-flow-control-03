@@ -3,12 +3,14 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useState, useEffect } from "react"
 
 interface ContaReceber {
   id: number
   numeroDocumento: string
   cliente: string
+  clienteId?: number
   descricao: string
   dataVencimento: string
   dataPagamento?: string
@@ -18,14 +20,22 @@ interface ContaReceber {
   formaPagamento?: string
 }
 
+interface Cliente {
+  id: number
+  nome: string
+  documento: string
+  status: "Ativo" | "Inativo"
+}
+
 interface ContaEdicaoModalProps {
   conta: ContaReceber | null
   isOpen: boolean
   onClose: () => void
   onSave: (conta: ContaReceber) => void
+  clientes: Cliente[]
 }
 
-export function ContaEdicaoModal({ conta, isOpen, onClose, onSave }: ContaEdicaoModalProps) {
+export function ContaEdicaoModal({ conta, isOpen, onClose, onSave, clientes }: ContaEdicaoModalProps) {
   const [formData, setFormData] = useState<Partial<ContaReceber>>({})
 
   useEffect(() => {
@@ -39,12 +49,22 @@ export function ContaEdicaoModal({ conta, isOpen, onClose, onSave }: ContaEdicao
 
   const handleSave = () => {
     if (conta && formData) {
-      onSave({ ...conta, ...formData } as ContaReceber)
+      // Encontrar o nome do cliente baseado no clienteId
+      const clienteSelecionado = clientes.find(c => c.id === formData.clienteId)
+      const contaAtualizada = {
+        ...conta,
+        ...formData,
+        cliente: clienteSelecionado ? clienteSelecionado.nome : formData.cliente || ''
+      } as ContaReceber
+      
+      onSave(contaAtualizada)
       onClose()
     }
   }
 
   if (!conta) return null
+
+  const clientesAtivos = clientes.filter(c => c.status === "Ativo")
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -67,11 +87,21 @@ export function ContaEdicaoModal({ conta, isOpen, onClose, onSave }: ContaEdicao
             </div>
             <div className="space-y-2">
               <Label htmlFor="cliente">Cliente</Label>
-              <Input
-                id="cliente"
-                value={formData.cliente || ''}
-                onChange={(e) => setFormData({...formData, cliente: e.target.value})}
-              />
+              <Select 
+                value={formData.clienteId?.toString() || ''} 
+                onValueChange={(value) => setFormData({...formData, clienteId: parseInt(value)})}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um cliente" />
+                </SelectTrigger>
+                <SelectContent>
+                  {clientesAtivos.map((cliente) => (
+                    <SelectItem key={cliente.id} value={cliente.id.toString()}>
+                      {cliente.nome} - {cliente.documento}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

@@ -25,6 +25,7 @@ interface ContaReceber {
   id: number
   numeroDocumento: string
   cliente: string
+  clienteId?: number
   descricao: string
   dataVencimento: string
   dataPagamento?: string
@@ -32,6 +33,13 @@ interface ContaReceber {
   valorPago?: number
   status: "Pendente" | "Pago" | "Vencido" | "Parcial"
   formaPagamento?: string
+}
+
+interface Cliente {
+  id: number
+  nome: string
+  documento: string
+  status: "Ativo" | "Inativo"
 }
 
 export default function ContasReceber() {
@@ -44,11 +52,20 @@ export default function ContasReceber() {
   const [recebimentoModal, setRecebimentoModal] = useState({ isOpen: false, contaId: null as number | null })
   const [edicaoModal, setEdicaoModal] = useState({ isOpen: false, conta: null as ContaReceber | null })
   
+  // Mock de clientes cadastrados (em uma aplicação real, viriam de uma API)
+  const [clientes] = useState<Cliente[]>([
+    { id: 1, nome: "Empresa ABC Ltda", documento: "12.345.678/0001-90", status: "Ativo" },
+    { id: 2, nome: "Comercial XYZ S.A.", documento: "98.765.432/0001-10", status: "Ativo" },
+    { id: 3, nome: "Indústria DEF ME", documento: "11.222.333/0001-44", status: "Ativo" },
+    { id: 4, nome: "João Silva", documento: "123.456.789-00", status: "Ativo" }
+  ])
+  
   const [contas, setContas] = useState<ContaReceber[]>([
     {
       id: 1,
       numeroDocumento: "FAT-2024-001",
       cliente: "Empresa ABC Ltda",
+      clienteId: 1,
       descricao: "Venda de produtos industriais",
       dataVencimento: "2024-02-15",
       dataPagamento: "2024-02-10",
@@ -61,6 +78,7 @@ export default function ContasReceber() {
       id: 2,
       numeroDocumento: "FAT-2024-002",
       cliente: "Comercial XYZ S.A.",
+      clienteId: 2,
       descricao: "Prestação de serviços",
       dataVencimento: "2024-02-20",
       valorOriginal: 850.00,
@@ -70,6 +88,7 @@ export default function ContasReceber() {
       id: 3,
       numeroDocumento: "FAT-2024-003",
       cliente: "Indústria DEF ME",
+      clienteId: 3,
       descricao: "Venda de equipamentos",
       dataVencimento: "2024-01-30",
       valorOriginal: 2100.00,
@@ -459,6 +478,7 @@ export default function ContasReceber() {
         isOpen={edicaoModal.isOpen}
         onClose={() => setEdicaoModal({ isOpen: false, conta: null })}
         onSave={handleSalvarEdicao}
+        clientes={clientes}
       />
     </div>
   )
