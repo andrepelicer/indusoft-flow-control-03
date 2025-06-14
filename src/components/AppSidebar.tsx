@@ -1,4 +1,5 @@
 
+
 import {
   Sidebar,
   SidebarContent,
@@ -66,7 +67,7 @@ const menuItems = [
     icon: Factory,
     items: [
       { title: "Ordens de Produção", url: "/ordens-producao" },
-      { title: "Conferência", url: "/conferencia" },
+      { title: "Etapas de Produção", url: "/etapas-producao" },
     ]
   },
   {
