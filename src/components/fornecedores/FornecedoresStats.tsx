@@ -4,7 +4,7 @@ import { Star } from "lucide-react"
 
 interface FornecedoresStatsProps {
   fornecedores: Array<{
-    status: 'Ativo' | 'Inativo'
+    status?: 'Ativo' | 'Inativo'
     avaliacao: number
     categoria: string
   }>

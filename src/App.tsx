@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -46,31 +45,9 @@ const App = () => (
             <Route path="/faturamento" element={<Faturamento />} />
             <Route path="/pedidos-compra" element={<PedidosCompra />} />
             <Route path="/contas-receber" element={<ContasReceber />} />
-            {/* Rotas placeholder para módulos ainda não implementados */}
-            <Route path="/contas-pagar" element={
-              <div className="flex items-center justify-center min-h-[400px]">
-                <div className="text-center">
-                  <h2 className="text-2xl font-bold mb-2">Módulo de Contas a Pagar</h2>
-                  <p className="text-muted-foreground">Em desenvolvimento</p>
-                </div>
-              </div>
-            } />
-            <Route path="/conta-corrente" element={
-              <div className="flex items-center justify-center min-h-[400px]">
-                <div className="text-center">
-                  <h2 className="text-2xl font-bold mb-2">Módulo de Conta Corrente</h2>
-                  <p className="text-muted-foreground">Em desenvolvimento</p>
-                </div>
-              </div>
-            } />
-            <Route path="/fluxo-caixa" element={
-              <div className="flex items-center justify-center min-h-[400px]">
-                <div className="text-center">
-                  <h2 className="text-2xl font-bold mb-2">Módulo de Fluxo de Caixa</h2>
-                  <p className="text-muted-foreground">Em desenvolvimento</p>
-                </div>
-              </div>
-            } />
+            <Route path="/contas-pagar" element={<ContasPagar />} />
+            <Route path="/conta-corrente" element={<ContaCorrente />} />
+            <Route path="/fluxo-caixa" element={<FluxoCaixa />} />
             <Route path="/ordens-producao" element={
               <div className="flex items-center justify-center min-h-[400px]">
                 <div className="text-center">
