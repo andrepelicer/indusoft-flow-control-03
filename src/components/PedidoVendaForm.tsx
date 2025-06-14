@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/select"
 import { pedidoSchema, type Pedido, ItemPedidoExpandido } from "@/lib/validations"
 import { useToast } from "@/hooks/use-toast"
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, useRef } from "react"
 import { ItemPedidoManager } from "./ItemPedidoManager"
 
 interface PedidoVendaFormProps {
@@ -41,6 +41,7 @@ interface PedidoVendaFormProps {
 export function PedidoVendaForm({ open, onOpenChange, pedido, onSave }: PedidoVendaFormProps) {
   const { toast } = useToast()
   const [itens, setItens] = useState<ItemPedidoExpandido[]>([])
+  const isEditingRef = useRef(false)
   
   const form = useForm<Pedido>({
     resolver: zodResolver(pedidoSchema),
@@ -57,43 +58,59 @@ export function PedidoVendaForm({ open, onOpenChange, pedido, onSave }: PedidoVe
     }
   })
 
+  // Reset form quando o pedido muda ou quando o modal abre/fecha
   useEffect(() => {
-    if (pedido) {
-      console.log('Carregando pedido para edição:', pedido)
-      form.reset(pedido)
-      setItens(pedido.itens || [])
-    } else {
-      form.reset({
-        numero: `PV-${Date.now()}`,
-        clienteId: 0,
-        vendedorId: 0,
-        dataPedido: new Date().toISOString().split('T')[0],
-        dataEntrega: "",
-        status: "Pendente",
-        observacoes: "",
-        desconto: 0,
-        valorTotal: 0
-      })
-      setItens([])
+    if (open) {
+      if (pedido) {
+        console.log('Carregando pedido para edição:', pedido)
+        isEditingRef.current = true
+        form.reset(pedido)
+        // Preservar os itens do pedido
+        setItens(pedido.itens || [])
+      } else {
+        console.log('Criando novo pedido')
+        isEditingRef.current = false
+        form.reset({
+          numero: `PV-${Date.now()}`,
+          clienteId: 0,
+          vendedorId: 0,
+          dataPedido: new Date().toISOString().split('T')[0],
+          dataEntrega: "",
+          status: "Pendente",
+          observacoes: "",
+          desconto: 0,
+          valorTotal: 0
+        })
+        setItens([])
+      }
     }
-  }, [pedido, form])
+  }, [pedido, form, open])
+
+  const handleItensChange = useCallback((novosItens: ItemPedidoExpandido[]) => {
+    console.log('Atualizando itens do pedido:', novosItens.length, 'itens')
+    setItens(novosItens)
+  }, [])
 
   const handleTotalChange = useCallback((novoTotal: number) => {
-    console.log('Atualizando total:', novoTotal)
+    console.log('Atualizando total dos itens:', novoTotal)
     const desconto = form.getValues('desconto') || 0
     const totalComDesconto = novoTotal * (1 - desconto / 100)
     form.setValue('valorTotal', totalComDesconto)
   }, [form])
 
   const handleDescontoChange = useCallback((desconto: number) => {
-    console.log('Atualizando desconto:', desconto)
+    console.log('Aplicando desconto:', desconto, '% sobre', itens.length, 'itens')
     const totalItens = itens.reduce((sum, item) => sum + (item.subtotal || 0), 0)
     const totalComDesconto = totalItens * (1 - desconto / 100)
     form.setValue('valorTotal', totalComDesconto)
   }, [itens, form])
 
   const onSubmit = (data: Pedido) => {
-    console.log('Submetendo pedido com itens:', { data, itens })
+    console.log('Submetendo pedido:', { 
+      ...data, 
+      totalItens: itens.length,
+      itensDetalhes: itens.map(i => ({ id: i.id, produto: i.produto?.nome, quantidade: i.quantidade }))
+    })
     
     if (itens.length === 0) {
       toast({
@@ -104,15 +121,30 @@ export function PedidoVendaForm({ open, onOpenChange, pedido, onSave }: PedidoVe
       return
     }
 
-    // Incluir os itens no pedido ao salvar
-    const pedidoComItens = { ...data, itens }
+    // Garantir que os itens estão incluídos no pedido
+    const pedidoComItens = { 
+      ...data, 
+      itens: [...itens] // Criar uma nova array para evitar referências
+    }
+    
+    console.log('Salvando pedido final:', pedidoComItens)
     onSave(pedidoComItens)
+    
     toast({
       title: pedido ? "Pedido atualizado" : "Pedido criado",
       description: "As informações foram salvas com sucesso.",
     })
     onOpenChange(false)
   }
+
+  // Resetar quando o modal fecha
+  useEffect(() => {
+    if (!open) {
+      console.log('Modal fechado, limpando estado')
+      setItens([])
+      isEditingRef.current = false
+    }
+  }, [open])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -249,7 +281,7 @@ export function PedidoVendaForm({ open, onOpenChange, pedido, onSave }: PedidoVe
             {/* Gerenciador de Itens */}
             <ItemPedidoManager
               itens={itens}
-              onItensChange={setItens}
+              onItensChange={handleItensChange}
               onTotalChange={handleTotalChange}
             />
 

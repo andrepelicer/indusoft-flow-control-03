@@ -97,20 +97,39 @@ const PedidosVenda = () => {
   const valorTotalPedidos = pedidos.reduce((sum, p) => sum + p.valorTotal, 0)
 
   const handleSavePedido = (pedidoData: Pedido & { itens: ItemPedidoExpandido[] }) => {
-    console.log('Salvando pedido com itens:', pedidoData)
+    console.log('Salvando pedido na página principal:', {
+      ...pedidoData,
+      totalItens: pedidoData.itens?.length || 0
+    })
     
     if (editingPedido) {
+      // Ao editar, preservar os itens
       setPedidos(prev => prev.map(p => 
-        p.id === editingPedido.id ? { ...pedidoData, id: editingPedido.id } as PedidoComId : p
+        p.id === editingPedido.id 
+          ? { 
+              ...pedidoData, 
+              id: editingPedido.id,
+              itens: pedidoData.itens || [] // Garantir que os itens sejam salvos
+            } as PedidoComId 
+          : p
       ))
+      console.log('Pedido atualizado com', pedidoData.itens?.length || 0, 'itens')
     } else {
+      // Ao criar novo, incluir os itens
       const newId = Math.max(...pedidos.map(p => p.id)) + 1
-      setPedidos(prev => [...prev, { ...pedidoData, id: newId } as PedidoComId])
+      const novoPedido = { 
+        ...pedidoData, 
+        id: newId,
+        itens: pedidoData.itens || []
+      } as PedidoComId
+      setPedidos(prev => [...prev, novoPedido])
+      console.log('Novo pedido criado com', pedidoData.itens?.length || 0, 'itens')
     }
     setEditingPedido(undefined)
   }
 
   const handleEditPedido = (pedido: PedidoComId) => {
+    console.log('Iniciando edição do pedido:', pedido.numero, 'com', pedido.itens?.length || 0, 'itens')
     setEditingPedido(pedido)
     setFormOpen(true)
   }
