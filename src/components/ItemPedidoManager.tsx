@@ -141,8 +141,29 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
     setShowDropdown(false)
   }
 
+  const abrirDialogOrdemProducao = (item: ItemPedidoExpandido) => {
+    console.log('Abrindo dialog para ordem de produção:', item)
+    setItemSelecionado(item)
+    setDataPrevisao("")
+    setObservacoesOP(`Ordem gerada automaticamente do pedido de venda para ${item.produto?.nome}`)
+    setOrdemProducaoDialog(true)
+  }
+
   const gerarOrdemProducao = () => {
-    if (!itemSelecionado || !dataPrevisao) {
+    console.log('Gerando ordem de produção...')
+    
+    if (!itemSelecionado) {
+      console.log('Nenhum item selecionado')
+      toast({
+        title: "Erro",
+        description: "Nenhum item selecionado para gerar ordem de produção.",
+        variant: "destructive"
+      })
+      return
+    }
+
+    if (!dataPrevisao) {
+      console.log('Data de previsão não preenchida')
       toast({
         title: "Erro",
         description: "Por favor, preencha a data de previsão.",
@@ -161,7 +182,7 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
       status: 'Pendente',
       dataCriacao: new Date().toISOString().split('T')[0],
       dataPrevisao: dataPrevisao,
-      observacoes: observacoesOP || `Ordem gerada automaticamente do pedido de venda`
+      observacoes: observacoesOP
     }
     
     console.log('Ordem de Produção criada:', novaOrdem)
@@ -178,11 +199,12 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
     setObservacoesOP("")
   }
 
-  const abrirDialogOrdemProducao = (item: ItemPedidoExpandido) => {
-    setItemSelecionado(item)
+  const fecharDialog = () => {
+    console.log('Fechando dialog')
+    setOrdemProducaoDialog(false)
+    setItemSelecionado(null)
     setDataPrevisao("")
-    setObservacoesOP(`Ordem gerada automaticamente do pedido de venda`)
-    setOrdemProducaoDialog(true)
+    setObservacoesOP("")
   }
 
   const produtosFiltrados = produtosMock.filter(produto =>
@@ -442,7 +464,7 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
                 </div>
                 
                 <div className="flex justify-end gap-2 pt-4">
-                  <Button variant="outline" onClick={() => setOrdemProducaoDialog(false)}>
+                  <Button variant="outline" onClick={fecharDialog}>
                     Cancelar
                   </Button>
                   <Button onClick={gerarOrdemProducao} disabled={!dataPrevisao}>
