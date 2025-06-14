@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
 import Index from "./pages/Index"
 import Login from "./pages/Login"
@@ -20,7 +21,7 @@ import Usuarios from "./pages/Usuarios"
 import Empresa from "./pages/Empresa"
 import OrdensProducao from "./pages/OrdensProducao"
 import EtapasProducao from "./pages/EtapasProducao"
-import Layout from "./components/Layout"
+import { Layout } from "./components/Layout"
 import NotFound from "./pages/NotFound"
 import "./App.css"
 
