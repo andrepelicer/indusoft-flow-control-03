@@ -11,6 +11,9 @@ import Usuarios from "./pages/Usuarios";
 import Clientes from "./pages/Clientes";
 import Fornecedores from "./pages/Fornecedores";
 import Produtos from "./pages/Produtos";
+import Vendedores from "./pages/Vendedores";
+import TabelaPrecos from "./pages/TabelaPrecos";
+import Faturamento from "./pages/Faturamento";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +33,9 @@ const App = () => (
           <Route path="/clientes" element={<Clientes />} />
           <Route path="/fornecedores" element={<Fornecedores />} />
           <Route path="/produtos" element={<Produtos />} />
+          <Route path="/vendedores" element={<Vendedores />} />
+          <Route path="/tabela-precos" element={<TabelaPrecos />} />
+          <Route path="/faturamento" element={<Faturamento />} />
           {/* Rotas placeholder para próximas fases */}
           <Route path="/orcamentos" element={<div className="p-8">Módulo de Orçamentos - Em desenvolvimento</div>} />
           <Route path="/pedidos-venda" element={<div className="p-8">Módulo de Pedidos de Venda - Em desenvolvimento</div>} />
@@ -38,7 +44,7 @@ const App = () => (
           <Route path="/contas-pagar" element={<div className="p-8">Módulo de Contas a Pagar - Em desenvolvimento</div>} />
           <Route path="/conta-corrente" element={<div className="p-8">Módulo de Conta Corrente - Em desenvolvimento</div>} />
           <Route path="/fluxo-caixa" element={<div className="p-8">Módulo de Fluxo de Caixa - Em desenvolvimento</div>} />
-          <Route path="/ordens-producao" element={<div className="p-8">Módulo de Ordens de Produção - Em desenvolvimento</div>} />
+          <Route path="/ordens-producao" element={<div className="p-8">Módulo de Ordens de Produção - Em desenvolvimento</div>}  />
           <Route path="/conferencia" element={<div className="p-8">Módulo de Conferência - Em desenvolvimento</div>} />
           <Route path="/configuracoes" element={<div className="p-8">Módulo de Configurações - Em desenvolvimento</div>} />
           <Route path="*" element={<NotFound />} />

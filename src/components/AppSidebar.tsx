@@ -11,7 +11,7 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar"
-import { Building2, Users, Package, ShoppingCart, CreditCard, Factory, BarChart3, Settings } from "lucide-react"
+import { Building2, Users, Package, ShoppingCart, CreditCard, Factory, BarChart3, Settings, DollarSign, UserCheck } from "lucide-react"
 import { Link } from "react-router-dom"
 
 const menuItems = [
@@ -29,14 +29,23 @@ const menuItems = [
       { title: "Clientes", url: "/clientes" },
       { title: "Fornecedores", url: "/fornecedores" },
       { title: "Produtos", url: "/produtos" },
+      { title: "Vendedores", url: "/vendedores" },
     ]
   },
   {
-    title: "Comercial",
+    title: "Vendas",
     icon: ShoppingCart,
     items: [
+      { title: "Tabela de Preços", url: "/tabela-precos" },
       { title: "Orçamentos", url: "/orcamentos" },
       { title: "Pedidos de Venda", url: "/pedidos-venda" },
+      { title: "Faturamento", url: "/faturamento" },
+    ]
+  },
+  {
+    title: "Compras",
+    icon: Package,
+    items: [
       { title: "Pedidos de Compra", url: "/pedidos-compra" },
     ]
   },

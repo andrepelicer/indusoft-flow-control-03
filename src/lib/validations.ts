@@ -39,6 +39,59 @@ export const produtoSchema = z.object({
   temFichaTecnica: z.boolean()
 })
 
+// Validação para Vendedor
+export const vendedorSchema = z.object({
+  nome: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
+  cpf: z.string().min(11, "CPF inválido"),
+  email: z.string().email("E-mail inválido"),
+  telefone: z.string().min(10, "Telefone inválido"),
+  comissao: z.number().min(0).max(100, "Comissão deve estar entre 0% e 100%"),
+  status: z.enum(["Ativo", "Inativo"]),
+  dataAdmissao: z.string().min(1, "Data de admissão é obrigatória")
+})
+
+// Validação para Tabela de Preços
+export const tabelaPrecoSchema = z.object({
+  nome: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
+  descricao: z.string().optional(),
+  ativa: z.boolean(),
+  dataInicio: z.string().min(1, "Data de início é obrigatória"),
+  dataFim: z.string().optional()
+})
+
+// Validação para Item da Tabela de Preços
+export const itemTabelaPrecoSchema = z.object({
+  produtoId: z.number().min(1, "Produto é obrigatório"),
+  preco: z.number().min(0, "Preço deve ser positivo"),
+  desconto: z.number().min(0).max(100, "Desconto deve estar entre 0% e 100%").optional()
+})
+
+// Validação para Pedido
+export const pedidoSchema = z.object({
+  numero: z.string().min(1, "Número do pedido é obrigatório"),
+  clienteId: z.number().min(1, "Cliente é obrigatório"),
+  vendedorId: z.number().min(1, "Vendedor é obrigatório"),
+  dataPedido: z.string().min(1, "Data do pedido é obrigatória"),
+  dataEntrega: z.string().optional(),
+  status: z.enum(["Pendente", "Aprovado", "Faturado", "Cancelado"]),
+  observacoes: z.string().optional(),
+  desconto: z.number().min(0).max(100, "Desconto deve estar entre 0% e 100%").optional(),
+  valorTotal: z.number().min(0, "Valor total deve ser positivo")
+})
+
+// Validação para Item do Pedido
+export const itemPedidoSchema = z.object({
+  produtoId: z.number().min(1, "Produto é obrigatório"),
+  quantidade: z.number().min(1, "Quantidade deve ser positiva"),
+  precoUnitario: z.number().min(0, "Preço unitário deve ser positivo"),
+  desconto: z.number().min(0).max(100, "Desconto deve estar entre 0% e 100%").optional()
+})
+
 export type Cliente = z.infer<typeof clienteSchema>
 export type Fornecedor = z.infer<typeof fornecedorSchema>
 export type Produto = z.infer<typeof produtoSchema>
+export type Vendedor = z.infer<typeof vendedorSchema>
+export type TabelaPreco = z.infer<typeof tabelaPrecoSchema>
+export type ItemTabelaPreco = z.infer<typeof itemTabelaPrecoSchema>
+export type Pedido = z.infer<typeof pedidoSchema>
+export type ItemPedido = z.infer<typeof itemPedidoSchema>

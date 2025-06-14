@@ -25,37 +25,36 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { fornecedorSchema, type Fornecedor } from "@/lib/validations"
+import { vendedorSchema, type Vendedor } from "@/lib/validations"
 import { useToast } from "@/hooks/use-toast"
 
-interface FornecedorFormProps {
+interface VendedorFormProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  fornecedor?: Fornecedor & { id: number }
-  onSave: (fornecedor: Fornecedor) => void
+  vendedor?: Vendedor & { id: number }
+  onSave: (vendedor: Vendedor) => void
 }
 
-export function FornecedorForm({ open, onOpenChange, fornecedor, onSave }: FornecedorFormProps) {
+export function VendedorForm({ open, onOpenChange, vendedor, onSave }: VendedorFormProps) {
   const { toast } = useToast()
   
-  const form = useForm<Fornecedor>({
-    resolver: zodResolver(fornecedorSchema),
-    defaultValues: fornecedor || {
+  const form = useForm<Vendedor>({
+    resolver: zodResolver(vendedorSchema),
+    defaultValues: vendedor || {
       nome: "",
-      cnpj: "",
-      categoria: "",
+      cpf: "",
       email: "",
       telefone: "",
-      cidade: "",
-      avaliacao: 5,
-      status: "Ativo"
+      comissao: 5,
+      status: "Ativo",
+      dataAdmissao: new Date().toISOString().split('T')[0]
     }
   })
 
-  const onSubmit = (data: Fornecedor) => {
+  const onSubmit = (data: Vendedor) => {
     onSave(data)
     toast({
-      title: fornecedor ? "Fornecedor atualizado" : "Fornecedor criado",
+      title: vendedor ? "Vendedor atualizado" : "Vendedor criado",
       description: "As informações foram salvas com sucesso.",
     })
     onOpenChange(false)
@@ -67,10 +66,10 @@ export function FornecedorForm({ open, onOpenChange, fornecedor, onSave }: Forne
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>
-            {fornecedor ? "Editar Fornecedor" : "Novo Fornecedor"}
+            {vendedor ? "Editar Vendedor" : "Novo Vendedor"}
           </DialogTitle>
           <DialogDescription>
-            Preencha as informações do fornecedor abaixo.
+            Preencha as informações do vendedor abaixo.
           </DialogDescription>
         </DialogHeader>
         
@@ -82,7 +81,7 @@ export function FornecedorForm({ open, onOpenChange, fornecedor, onSave }: Forne
                 name="nome"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nome/Razão Social</FormLabel>
+                    <FormLabel>Nome Completo</FormLabel>
                     <FormControl>
                       <Input placeholder="Digite o nome" {...field} />
                     </FormControl>
@@ -93,12 +92,12 @@ export function FornecedorForm({ open, onOpenChange, fornecedor, onSave }: Forne
               
               <FormField
                 control={form.control}
-                name="cnpj"
+                name="cpf"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>CNPJ</FormLabel>
+                    <FormLabel>CPF</FormLabel>
                     <FormControl>
-                      <Input placeholder="00.000.000/0001-00" {...field} />
+                      <Input placeholder="000.000.000-00" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -107,20 +106,6 @@ export function FornecedorForm({ open, onOpenChange, fornecedor, onSave }: Forne
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="categoria"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Categoria</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ex: Matéria-prima, Serviços" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
               <FormField
                 control={form.control}
                 name="email"
@@ -134,9 +119,7 @@ export function FornecedorForm({ open, onOpenChange, fornecedor, onSave }: Forne
                   </FormItem>
                 )}
               />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
+              
               <FormField
                 control={form.control}
                 name="telefone"
@@ -150,43 +133,37 @@ export function FornecedorForm({ open, onOpenChange, fornecedor, onSave }: Forne
                   </FormItem>
                 )}
               />
-              
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
               <FormField
                 control={form.control}
-                name="cidade"
+                name="comissao"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Cidade</FormLabel>
+                    <FormLabel>Comissão (%)</FormLabel>
                     <FormControl>
-                      <Input placeholder="Digite a cidade" {...field} />
+                      <Input 
+                        type="number" 
+                        placeholder="5.00" 
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))} 
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
+              
               <FormField
                 control={form.control}
-                name="avaliacao"
+                name="dataAdmissao"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Avaliação (1-5)</FormLabel>
-                    <Select onValueChange={(value) => field.onChange(Number(value))} value={field.value?.toString()}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione a avaliação" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="1">1 - Muito Ruim</SelectItem>
-                        <SelectItem value="2">2 - Ruim</SelectItem>
-                        <SelectItem value="3">3 - Regular</SelectItem>
-                        <SelectItem value="4">4 - Bom</SelectItem>
-                        <SelectItem value="5">5 - Excelente</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <FormLabel>Data Admissão</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -220,7 +197,7 @@ export function FornecedorForm({ open, onOpenChange, fornecedor, onSave }: Forne
                 Cancelar
               </Button>
               <Button type="submit">
-                {fornecedor ? "Atualizar" : "Salvar"}
+                {vendedor ? "Atualizar" : "Salvar"}
               </Button>
             </div>
           </form>
