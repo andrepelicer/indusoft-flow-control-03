@@ -1,5 +1,4 @@
-import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar"
-import { AppSidebar } from "@/components/AppSidebar"
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -125,158 +124,160 @@ const Fornecedores = () => {
   const avaliacaoMedia = fornecedores.reduce((sum, f) => sum + f.avaliacao, 0) / fornecedores.length
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
-        <AppSidebar />
-        <SidebarInset className="flex-1">
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b border-border px-4">
-            <SidebarTrigger className="-ml-1" />
-            <div className="flex items-center gap-2">
-              <Truck className="h-5 w-5" />
-              <h1 className="text-lg font-semibold">Fornecedores</h1>
-            </div>
-          </header>
-          
-          <main className="flex-1 p-6">
-            <div className="flex justify-between items-center mb-6">
-              <div>
-                <h2 className="text-2xl font-bold">Gestão de Fornecedores</h2>
-                <p className="text-muted-foreground">Cadastro e avaliação de fornecedores por categoria</p>
-              </div>
-              <Button onClick={handleNewFornecedor}>
-                <Plus className="h-4 w-4 mr-2" />
-                Novo Fornecedor
-              </Button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-              <Card>
-                <CardContent className="p-4">
-                  <div className="text-2xl font-bold text-primary">{fornecedores.length}</div>
-                  <div className="text-sm text-muted-foreground">Total Fornecedores</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <div className="text-2xl font-bold text-green-600">
-                    {fornecedores.filter(f => f.status === 'Ativo').length}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Ativos</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <div className="text-2xl font-bold text-yellow-600">{avaliacaoMedia.toFixed(1)}</div>
-                  <div className="text-sm text-muted-foreground">Avaliação Média</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <div className="text-2xl font-bold text-blue-600">
-                    {new Set(fornecedores.map(f => f.categoria)).size}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Categorias</div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle>Filtros</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex gap-4">
-                  <div className="flex-1">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                      <Input
-                        placeholder="Buscar por nome, CNPJ ou categoria..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-                  </div>
-                  <Button variant="outline">Por Categoria</Button>
-                  <Button variant="outline">Por Avaliação</Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Lista de Fornecedores</CardTitle>
-                <CardDescription>
-                  {filteredFornecedores.length} fornecedor(es) encontrado(s)
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nome/Razão Social</TableHead>
-                      <TableHead>CNPJ</TableHead>
-                      <TableHead>Categoria</TableHead>
-                      <TableHead>Contato</TableHead>
-                      <TableHead>Cidade</TableHead>
-                      <TableHead>Avaliação</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredFornecedores.map((fornecedor) => (
-                      <TableRow key={fornecedor.id}>
-                        <TableCell className="font-medium">{fornecedor.nome}</TableCell>
-                        <TableCell className="font-mono text-sm">{fornecedor.cnpj}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{fornecedor.categoria}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            <div className="text-sm">{fornecedor.email}</div>
-                            <div className="text-sm text-muted-foreground">{fornecedor.telefone}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell>{fornecedor.cidade}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            {renderStars(fornecedor.avaliacao)}
-                            <span className="text-sm ml-1">({fornecedor.avaliacao})</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={fornecedor.status === 'Ativo' ? 'default' : 'secondary'}>
-                            {fornecedor.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handleEditFornecedor(fornecedor)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handleDeleteFornecedor(fornecedor.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </main>
-        </SidebarInset>
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <Truck className="h-6 w-6" />
+            <h2 className="text-2xl font-bold">Gestão de Fornecedores</h2>
+          </div>
+          <p className="text-muted-foreground">Cadastro e avaliação de fornecedores por categoria</p>
+        </div>
+        <Button onClick={handleNewFornecedor} className="w-full sm:w-auto">
+          <Plus className="h-4 w-4 mr-2" />
+          Novo Fornecedor
+        </Button>
       </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-primary">{fornecedores.length}</div>
+            <div className="text-sm text-muted-foreground">Total Fornecedores</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-green-600">
+              {fornecedores.filter(f => f.status === 'Ativo').length}
+            </div>
+            <div className="text-sm text-muted-foreground">Ativos</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-yellow-600">{avaliacaoMedia.toFixed(1)}</div>
+            <div className="text-sm text-muted-foreground">Avaliação Média</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-blue-600">
+              {new Set(fornecedores.map(f => f.categoria)).size}
+            </div>
+            <div className="text-sm text-muted-foreground">Categorias</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Filtros</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  placeholder="Buscar por nome, CNPJ ou categoria..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm">Por Categoria</Button>
+              <Button variant="outline" size="sm">Por Avaliação</Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Lista de Fornecedores</CardTitle>
+          <CardDescription>
+            {filteredFornecedores.length} fornecedor(es) encontrado(s)
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome/Razão Social</TableHead>
+                  <TableHead className="hidden sm:table-cell">CNPJ</TableHead>
+                  <TableHead className="hidden md:table-cell">Categoria</TableHead>
+                  <TableHead className="hidden lg:table-cell">Contato</TableHead>
+                  <TableHead className="hidden xl:table-cell">Cidade</TableHead>
+                  <TableHead>Avaliação</TableHead>
+                  <TableHead className="hidden sm:table-cell">Status</TableHead>
+                  <TableHead>Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredFornecedores.map((fornecedor) => (
+                  <TableRow key={fornecedor.id}>
+                    <TableCell>
+                      <div>
+                        <div className="font-medium">{fornecedor.nome}</div>
+                        <div className="sm:hidden text-sm text-muted-foreground">
+                          {fornecedor.cnpj}
+                        </div>
+                        <div className="md:hidden text-sm text-muted-foreground">
+                          <Badge variant="outline" className="text-xs">{fornecedor.categoria}</Badge>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell font-mono text-sm">{fornecedor.cnpj}</TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <Badge variant="outline">{fornecedor.categoria}</Badge>
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell">
+                      <div className="space-y-1">
+                        <div className="text-sm">{fornecedor.email}</div>
+                        <div className="text-sm text-muted-foreground">{fornecedor.telefone}</div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden xl:table-cell">{fornecedor.cidade}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        {renderStars(fornecedor.avaliacao)}
+                        <span className="text-sm ml-1">({fornecedor.avaliacao})</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      <Badge variant={fornecedor.status === 'Ativo' ? 'default' : 'secondary'}>
+                        {fornecedor.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleEditFornecedor(fornecedor)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleDeleteFornecedor(fornecedor.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
 
       <FornecedorForm
         open={formOpen}
@@ -299,7 +300,7 @@ const Fornecedores = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </SidebarProvider>
+    </div>
   )
 }
 

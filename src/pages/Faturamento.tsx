@@ -18,10 +18,8 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { SidebarProvider } from "@/components/ui/sidebar"
-import { AppSidebar } from "@/components/AppSidebar"
 import { useToast } from "@/hooks/use-toast"
-import { Search, FileText, DollarSign, Calendar, User, Package } from "lucide-react"
+import { Search, FileText, DollarSign, Package } from "lucide-react"
 
 interface Pedido {
   id: number
@@ -183,279 +181,286 @@ export default function Faturamento() {
   const totalParaFaturar = pedidosParaFaturar.reduce((sum, p) => sum + p.valorTotal, 0)
 
   return (
-    <SidebarProvider>
-      <AppSidebar />
-      <main className="flex-1 p-6">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Faturamento de Pedidos</h1>
-          <p className="text-gray-600">Gerencie o faturamento dos pedidos aprovados</p>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold">Faturamento de Pedidos</h2>
+          <p className="text-muted-foreground">Gerencie o faturamento dos pedidos aprovados</p>
         </div>
+      </div>
 
-        {/* Cards de Resumo */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-100 rounded-full">
-                  <FileText className="h-5 w-5 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Total Pedidos</p>
-                  <p className="text-xl font-bold">{pedidos.length}</p>
-                </div>
+      {/* Cards de Resumo */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-100 rounded-full">
+                <FileText className="h-5 w-5 text-blue-600" />
               </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-100 rounded-full">
-                  <DollarSign className="h-5 w-5 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Para Faturar</p>
-                  <p className="text-xl font-bold">{pedidosParaFaturar.length}</p>
-                </div>
+              <div>
+                <p className="text-sm text-gray-600">Total Pedidos</p>
+                <p className="text-xl font-bold">{pedidos.length}</p>
               </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-100 rounded-full">
-                  <DollarSign className="h-5 w-5 text-purple-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Valor a Faturar</p>
-                  <p className="text-lg font-bold">{formatCurrency(totalParaFaturar)}</p>
-                </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-green-100 rounded-full">
+                <DollarSign className="h-5 w-5 text-green-600" />
               </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-orange-100 rounded-full">
-                  <FileText className="h-5 w-5 text-orange-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Faturados</p>
-                  <p className="text-xl font-bold">{pedidos.filter(p => p.status === "Faturado").length}</p>
-                </div>
+              <div>
+                <p className="text-sm text-gray-600">Para Faturar</p>
+                <p className="text-xl font-bold">{pedidosParaFaturar.length}</p>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-purple-100 rounded-full">
+                <DollarSign className="h-5 w-5 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Valor a Faturar</p>
+                <p className="text-lg font-bold">{formatCurrency(totalParaFaturar)}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-orange-100 rounded-full">
+                <FileText className="h-5 w-5 text-orange-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Faturados</p>
+                <p className="text-xl font-bold">{pedidos.filter(p => p.status === "Faturado").length}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Lista de Pedidos */}
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="h-5 w-5" />
-                    Pedidos para Faturamento
-                  </CardTitle>
-                  <CardDescription>
-                    {filteredPedidos.length} pedido(s) encontrado(s)
-                  </CardDescription>
-                </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Lista de Pedidos */}
+        <Card>
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Pedidos para Faturamento
+                </CardTitle>
+                <CardDescription>
+                  {filteredPedidos.length} pedido(s) encontrado(s)
+                </CardDescription>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4 mb-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="Buscar por número, cliente ou vendedor..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-                
-                <div className="flex gap-2">
-                  <Button
-                    variant={statusFilter === "all" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setStatusFilter("all")}
-                  >
-                    Todos
-                  </Button>
-                  <Button
-                    variant={statusFilter === "Pendente" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setStatusFilter("Pendente")}
-                  >
-                    Pendente
-                  </Button>
-                  <Button
-                    variant={statusFilter === "Aprovado" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setStatusFilter("Aprovado")}
-                  >
-                    Aprovado
-                  </Button>
-                  <Button
-                    variant={statusFilter === "Faturado" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setStatusFilter("Faturado")}
-                  >
-                    Faturado
-                  </Button>
-                </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4 mb-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Buscar por número, cliente ou vendedor..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
               </div>
+              
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant={statusFilter === "all" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setStatusFilter("all")}
+                >
+                  Todos
+                </Button>
+                <Button
+                  variant={statusFilter === "Pendente" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setStatusFilter("Pendente")}
+                >
+                  Pendente
+                </Button>
+                <Button
+                  variant={statusFilter === "Aprovado" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setStatusFilter("Aprovado")}
+                >
+                  Aprovado
+                </Button>
+                <Button
+                  variant={statusFilter === "Faturado" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setStatusFilter("Faturado")}
+                >
+                  Faturado
+                </Button>
+              </div>
+            </div>
 
-              <div className="border rounded-md">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Pedido</TableHead>
-                      <TableHead>Cliente</TableHead>
-                      <TableHead>Valor</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Ação</TableHead>
+            <div className="border rounded-md overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Pedido</TableHead>
+                    <TableHead className="hidden sm:table-cell">Cliente</TableHead>
+                    <TableHead>Valor</TableHead>
+                    <TableHead className="hidden md:table-cell">Status</TableHead>
+                    <TableHead>Ação</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredPedidos.map((pedido) => (
+                    <TableRow 
+                      key={pedido.id}
+                      className={`cursor-pointer ${selectedPedido?.id === pedido.id ? 'bg-muted' : ''}`}
+                      onClick={() => setSelectedPedido(pedido)}
+                    >
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{pedido.numero}</div>
+                          <div className="text-sm text-gray-500">{formatDate(pedido.dataPedido)}</div>
+                          <div className="sm:hidden text-sm text-gray-500">{pedido.cliente}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell">{pedido.cliente}</TableCell>
+                      <TableCell className="font-medium">{formatCurrency(pedido.valorTotal)}</TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <Badge variant={getStatusColor(pedido.status) as any}>
+                          {pedido.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {pedido.status === "Aprovado" && (
+                          <Button
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleFaturar(pedido)
+                            }}
+                          >
+                            Faturar
+                          </Button>
+                        )}
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredPedidos.map((pedido) => (
-                      <TableRow 
-                        key={pedido.id}
-                        className={`cursor-pointer ${selectedPedido?.id === pedido.id ? 'bg-muted' : ''}`}
-                        onClick={() => setSelectedPedido(pedido)}
-                      >
-                        <TableCell>
-                          <div>
-                            <div className="font-medium">{pedido.numero}</div>
-                            <div className="text-sm text-gray-500">{formatDate(pedido.dataPedido)}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell>{pedido.cliente}</TableCell>
-                        <TableCell className="font-medium">{formatCurrency(pedido.valorTotal)}</TableCell>
-                        <TableCell>
-                          <Badge variant={getStatusColor(pedido.status) as any}>
-                            {pedido.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {pedido.status === "Aprovado" && (
-                            <Button
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                handleFaturar(pedido)
-                              }}
-                            >
-                              Faturar
-                            </Button>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
 
-          {/* Detalhes do Pedido */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5" />
-                Detalhes do Pedido
-              </CardTitle>
-              <CardDescription>
-                {selectedPedido 
-                  ? `Informações do pedido ${selectedPedido.numero}`
-                  : "Selecione um pedido para ver os detalhes"
-                }
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {selectedPedido ? (
-                <div className="space-y-4">
-                  {/* Cabeçalho do Pedido */}
-                  <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
-                    <div>
-                      <p className="text-sm text-gray-600">Cliente</p>
-                      <p className="font-medium">{selectedPedido.cliente}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Vendedor</p>
-                      <p className="font-medium">{selectedPedido.vendedor}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Data do Pedido</p>
-                      <p className="font-medium">{formatDate(selectedPedido.dataPedido)}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Status</p>
-                      <Badge variant={getStatusColor(selectedPedido.status) as any}>
-                        {selectedPedido.status}
-                      </Badge>
-                    </div>
-                  </div>
-
-                  {/* Itens do Pedido */}
+        {/* Detalhes do Pedido */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              Detalhes do Pedido
+            </CardTitle>
+            <CardDescription>
+              {selectedPedido 
+                ? `Informações do pedido ${selectedPedido.numero}`
+                : "Selecione um pedido para ver os detalhes"
+              }
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {selectedPedido ? (
+              <div className="space-y-4">
+                {/* Cabeçalho do Pedido */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
                   <div>
-                    <h4 className="font-medium mb-3">Itens do Pedido</h4>
-                    <div className="border rounded-md">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Produto</TableHead>
-                            <TableHead>Qtd</TableHead>
-                            <TableHead>Preço Unit.</TableHead>
-                            <TableHead>Total</TableHead>
+                    <p className="text-sm text-gray-600">Cliente</p>
+                    <p className="font-medium">{selectedPedido.cliente}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Vendedor</p>
+                    <p className="font-medium">{selectedPedido.vendedor}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Data do Pedido</p>
+                    <p className="font-medium">{formatDate(selectedPedido.dataPedido)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Status</p>
+                    <Badge variant={getStatusColor(selectedPedido.status) as any}>
+                      {selectedPedido.status}
+                    </Badge>
+                  </div>
+                </div>
+
+                {/* Itens do Pedido */}
+                <div>
+                  <h4 className="font-medium mb-3">Itens do Pedido</h4>
+                  <div className="border rounded-md overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Produto</TableHead>
+                          <TableHead className="hidden sm:table-cell">Qtd</TableHead>
+                          <TableHead className="hidden md:table-cell">Preço Unit.</TableHead>
+                          <TableHead>Total</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {selectedPedido.itens.map((item) => (
+                          <TableRow key={item.id}>
+                            <TableCell>
+                              <div>
+                                <div className="font-medium">{item.produto}</div>
+                                <div className="sm:hidden text-sm text-gray-500">
+                                  Qtd: {item.quantidade} × {formatCurrency(item.precoUnitario)}
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell className="hidden sm:table-cell">{item.quantidade}</TableCell>
+                            <TableCell className="hidden md:table-cell">{formatCurrency(item.precoUnitario)}</TableCell>
+                            <TableCell className="font-medium">{formatCurrency(item.total)}</TableCell>
                           </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {selectedPedido.itens.map((item) => (
-                            <TableRow key={item.id}>
-                              <TableCell>{item.produto}</TableCell>
-                              <TableCell>{item.quantidade}</TableCell>
-                              <TableCell>{formatCurrency(item.precoUnitario)}</TableCell>
-                              <TableCell className="font-medium">{formatCurrency(item.total)}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
+                        ))}
+                      </TableBody>
+                    </Table>
                   </div>
+                </div>
 
-                  {/* Total */}
-                  <div className="border-t pt-4">
-                    <div className="flex justify-between items-center text-lg font-bold">
-                      <span>Total do Pedido:</span>
-                      <span>{formatCurrency(selectedPedido.valorTotal)}</span>
-                    </div>
+                {/* Total */}
+                <div className="border-t pt-4">
+                  <div className="flex justify-between items-center text-lg font-bold">
+                    <span>Total do Pedido:</span>
+                    <span>{formatCurrency(selectedPedido.valorTotal)}</span>
                   </div>
+                </div>
 
-                  {/* Ações */}
-                  {selectedPedido.status === "Aprovado" && (
-                    <div className="flex gap-2 pt-4">
-                      <Button onClick={() => handleFaturar(selectedPedido)} className="flex-1">
-                        <DollarSign className="h-4 w-4 mr-2" />
-                        Faturar Pedido
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Selecione um pedido para visualizar os detalhes</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </main>
-    </SidebarProvider>
+                {/* Ações */}
+                {selectedPedido.status === "Aprovado" && (
+                  <div className="flex gap-2 pt-4">
+                    <Button onClick={() => handleFaturar(selectedPedido)} className="flex-1">
+                      <DollarSign className="h-4 w-4 mr-2" />
+                      Faturar Pedido
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>Selecione um pedido para visualizar os detalhes</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   )
 }
