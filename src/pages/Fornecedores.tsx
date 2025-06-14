@@ -8,11 +8,32 @@ import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Truck, Plus, Search, Edit, Trash2, Star } from "lucide-react"
 import { useState } from "react"
+import { FornecedorForm } from "@/components/FornecedorForm"
+import { type Fornecedor } from "@/lib/validations"
+import { useToast } from "@/hooks/use-toast"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+
+type FornecedorComId = Fornecedor & { id: number }
 
 const Fornecedores = () => {
   const [searchTerm, setSearchTerm] = useState("")
+  const [formOpen, setFormOpen] = useState(false)
+  const [editingFornecedor, setEditingFornecedor] =
+    useState<FornecedorComId | undefined>()
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [fornecedorToDelete, setFornecedorToDelete] = useState<number | null>(null)
+  const { toast } = useToast()
   
-  const fornecedores = [
+  const [fornecedores, setFornecedores] = useState<FornecedorComId[]>([
     { 
       id: 1, 
       nome: "Aços Especiais Ltda", 
@@ -21,9 +42,8 @@ const Fornecedores = () => {
       email: "vendas@acosespeciais.com.br",
       telefone: "(11) 3333-4444",
       cidade: "São Bernardo do Campo",
-      status: "Ativo",
-      avaliacao: 5,
-      ultimaCompra: "2024-01-15"
+      status: "Ativo" as const,
+      avaliacao: 5
     },
     { 
       id: 2, 
@@ -33,9 +53,8 @@ const Fornecedores = () => {
       email: "contato@transportesilva.com",
       telefone: "(11) 4444-5555",
       cidade: "Santo André",
-      status: "Ativo",
-      avaliacao: 4,
-      ultimaCompra: "2024-01-10"
+      status: "Ativo" as const,
+      avaliacao: 4
     },
     { 
       id: 3, 
@@ -45,17 +64,50 @@ const Fornecedores = () => {
       email: "comercial@ferramentasindustriais.com",
       telefone: "(11) 5555-6666",
       cidade: "Diadema",
-      status: "Inativo",
-      avaliacao: 3,
-      ultimaCompra: "2023-12-20"
+      status: "Inativo" as const,
+      avaliacao: 3
     },
-  ]
+  ])
 
   const filteredFornecedores = fornecedores.filter(fornecedor =>
     fornecedor.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
     fornecedor.cnpj.includes(searchTerm) ||
     fornecedor.categoria.toLowerCase().includes(searchTerm.toLowerCase())
   )
+
+  const handleSaveFornecedor = (fornecedorData: Fornecedor) => {
+    if (editingFornecedor) {
+      setFornecedores(prev => prev.map(f => 
+        f.id === editingFornecedor.id ? { ...fornecedorData, id: editingFornecedor.id } as FornecedorComId : f
+      ))
+    } else {
+      const newId = Math.max(...fornecedores.map(f => f.id)) + 1
+      setFornecedores(prev => [...prev, { ...fornecedorData, id: newId } as FornecedorComId])
+    }
+    setEditingFornecedor(undefined)
+  }
+
+  const handleEditFornecedor = (fornecedor: FornecedorComId) => {
+    setEditingFornecedor(fornecedor)
+    setFormOpen(true)
+  }
+
+  const handleDeleteFornecedor = (id: number) => {
+    setFornecedorToDelete(id)
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmDelete = () => {
+    if (fornecedorToDelete) {
+      setFornecedores(prev => prev.filter(f => f.id !== fornecedorToDelete))
+      toast({
+        title: "Fornecedor excluído",
+        description: "O fornecedor foi removido com sucesso.",
+      })
+    }
+    setDeleteDialogOpen(false)
+    setFornecedorToDelete(null)
+  }
 
   const renderStars = (rating: number) => {
     return [...Array(5)].map((_, i) => (
@@ -65,6 +117,8 @@ const Fornecedores = () => {
       />
     ))
   }
+
+  const avaliacaoMedia = fornecedores.reduce((sum, f) => sum + f.avaliacao, 0) / fornecedores.length
 
   return (
     <SidebarProvider>
@@ -85,7 +139,7 @@ const Fornecedores = () => {
                 <h2 className="text-2xl font-bold">Gestão de Fornecedores</h2>
                 <p className="text-muted-foreground">Cadastro e avaliação de fornecedores por categoria</p>
               </div>
-              <Button>
+              <Button onClick={() => setFormOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 Novo Fornecedor
               </Button>
@@ -94,25 +148,29 @@ const Fornecedores = () => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
               <Card>
                 <CardContent className="p-4">
-                  <div className="text-2xl font-bold text-primary">12</div>
+                  <div className="text-2xl font-bold text-primary">{fornecedores.length}</div>
                   <div className="text-sm text-muted-foreground">Total Fornecedores</div>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-4">
-                  <div className="text-2xl font-bold text-green-600">10</div>
+                  <div className="text-2xl font-bold text-green-600">
+                    {fornecedores.filter(f => f.status === 'Ativo').length}
+                  </div>
                   <div className="text-sm text-muted-foreground">Ativos</div>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-4">
-                  <div className="text-2xl font-bold text-yellow-600">4.2</div>
+                  <div className="text-2xl font-bold text-yellow-600">{avaliacaoMedia.toFixed(1)}</div>
                   <div className="text-sm text-muted-foreground">Avaliação Média</div>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-4">
-                  <div className="text-2xl font-bold text-blue-600">8</div>
+                  <div className="text-2xl font-bold text-blue-600">
+                    {new Set(fornecedores.map(f => f.categoria)).size}
+                  </div>
                   <div className="text-sm text-muted-foreground">Categorias</div>
                 </CardContent>
               </Card>
@@ -158,7 +216,6 @@ const Fornecedores = () => {
                       <TableHead>Contato</TableHead>
                       <TableHead>Cidade</TableHead>
                       <TableHead>Avaliação</TableHead>
-                      <TableHead>Última Compra</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Ações</TableHead>
                     </TableRow>
@@ -184,9 +241,6 @@ const Fornecedores = () => {
                             <span className="text-sm ml-1">({fornecedor.avaliacao})</span>
                           </div>
                         </TableCell>
-                        <TableCell className="text-sm">
-                          {new Date(fornecedor.ultimaCompra).toLocaleDateString('pt-BR')}
-                        </TableCell>
                         <TableCell>
                           <Badge variant={fornecedor.status === 'Ativo' ? 'default' : 'secondary'}>
                             {fornecedor.status}
@@ -194,10 +248,18 @@ const Fornecedores = () => {
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-2">
-                            <Button variant="ghost" size="sm">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleEditFornecedor(fornecedor)}
+                            >
                               <Edit className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleDeleteFornecedor(fornecedor.id)}
+                            >
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
@@ -206,17 +268,33 @@ const Fornecedores = () => {
                     ))}
                   </TableBody>
                 </Table>
-                
-                <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-blue-800">
-                    <strong>Próxima Fase:</strong> Implementaremos sistema de cotações, comparação de preços, dados bancários e histórico de relacionamento.
-                  </p>
-                </div>
               </CardContent>
             </Card>
           </main>
         </SidebarInset>
       </div>
+
+      <FornecedorForm
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        fornecedor={editingFornecedor}
+        onSave={handleSaveFornecedor}
+      />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir este fornecedor? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </SidebarProvider>
   )
 }

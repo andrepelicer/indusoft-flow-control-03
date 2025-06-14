@@ -22,15 +22,17 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 
+type ClienteComId = Cliente & { id: number }
+
 const Clientes = () => {
   const [searchTerm, setSearchTerm] = useState("")
   const [formOpen, setFormOpen] = useState(false)
-  const [editingCliente, setEditingCliente] = useState<(Cliente & { id: number }) | undefined>()
+  const [editingCliente, setEditingCliente] = useState<ClienteComId | undefined>()
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [clienteToDelete, setClienteToDelete] = useState<number | null>(null)
   const { toast } = useToast()
   
-  const [clientes, setClientes] = useState([
+  const [clientes, setClientes] = useState<ClienteComId[]>([
     { 
       id: 1, 
       nome: "Metalúrgica São Paulo Ltda", 
@@ -75,16 +77,16 @@ const Clientes = () => {
   const handleSaveCliente = (clienteData: Cliente) => {
     if (editingCliente) {
       setClientes(prev => prev.map(c => 
-        c.id === editingCliente.id ? { ...clienteData, id: editingCliente.id } : c
+        c.id === editingCliente.id ? { ...clienteData, id: editingCliente.id } as ClienteComId : c
       ))
     } else {
       const newId = Math.max(...clientes.map(c => c.id)) + 1
-      setClientes(prev => [...prev, { ...clienteData, id: newId }])
+      setClientes(prev => [...prev, { ...clienteData, id: newId } as ClienteComId])
     }
     setEditingCliente(undefined)
   }
 
-  const handleEditCliente = (cliente: Cliente & { id: number }) => {
+  const handleEditCliente = (cliente: ClienteComId) => {
     setEditingCliente(cliente)
     setFormOpen(true)
   }
@@ -129,6 +131,39 @@ const Clientes = () => {
                 <Plus className="h-4 w-4 mr-2" />
                 Novo Cliente
               </Button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              <Card>
+                <CardContent className="p-4">
+                  <div className="text-2xl font-bold text-primary">{clientes.length}</div>
+                  <div className="text-sm text-muted-foreground">Total Clientes</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="text-2xl font-bold text-green-600">
+                    {clientes.filter(c => c.status === 'Ativo').length}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Ativos</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="text-2xl font-bold text-blue-600">
+                    {clientes.filter(c => c.tipo === 'PJ').length}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Pessoas Jurídicas</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="text-2xl font-bold text-purple-600">
+                    R$ {clientes.reduce((sum, c) => sum + c.limiteCredito, 0).toLocaleString('pt-BR')}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Limite Total</div>
+                </CardContent>
+              </Card>
             </div>
 
             <Card className="mb-6">

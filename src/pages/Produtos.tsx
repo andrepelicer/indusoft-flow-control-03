@@ -8,11 +8,31 @@ import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Package, Plus, Search, Edit, Trash2, Eye, AlertTriangle } from "lucide-react"
 import { useState } from "react"
+import { ProdutoForm } from "@/components/ProdutoForm"
+import { type Produto } from "@/lib/validations"
+import { useToast } from "@/hooks/use-toast"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+
+type ProdutoComId = Produto & { id: number }
 
 const Produtos = () => {
   const [searchTerm, setSearchTerm] = useState("")
+  const [formOpen, setFormOpen] = useState(false)
+  const [editingProduto, setEditingProduto] = useState<ProdutoComId | undefined>()
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [produtoToDelete, setProdutoToDelete] = useState<number | null>(null)
+  const { toast } = useToast()
   
-  const produtos = [
+  const [produtos, setProdutos] = useState<ProdutoComId[]>([
     { 
       id: 1, 
       codigo: "PRD-001", 
@@ -23,7 +43,7 @@ const Produtos = () => {
       custoProducao: 65.20,
       estoque: 150,
       estoqueMinimo: 50,
-      status: "Ativo",
+      status: "Ativo" as const,
       temFichaTecnica: true
     },
     { 
@@ -36,7 +56,7 @@ const Produtos = () => {
       custoProducao: 1.20,
       estoque: 5000,
       estoqueMinimo: 1000,
-      status: "Ativo",
+      status: "Ativo" as const,
       temFichaTecnica: false
     },
     { 
@@ -49,7 +69,7 @@ const Produtos = () => {
       custoProducao: 890.00,
       estoque: 8,
       estoqueMinimo: 5,
-      status: "Ativo",
+      status: "Ativo" as const,
       temFichaTecnica: true
     },
     { 
@@ -62,10 +82,10 @@ const Produtos = () => {
       custoProducao: 32.00,
       estoque: 2,
       estoqueMinimo: 10,
-      status: "Ativo",
+      status: "Ativo" as const,
       temFichaTecnica: false
     },
-  ]
+  ])
 
   const filteredProdutos = produtos.filter(produto =>
     produto.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -74,6 +94,41 @@ const Produtos = () => {
   )
 
   const produtosBaixoEstoque = produtos.filter(p => p.estoque <= p.estoqueMinimo)
+  const valorTotalEstoque = produtos.reduce((sum, p) => sum + (p.precoVenda * p.estoque), 0)
+
+  const handleSaveProduto = (produtoData: Produto) => {
+    if (editingProduto) {
+      setProdutos(prev => prev.map(p => 
+        p.id === editingProduto.id ? { ...produtoData, id: editingProduto.id } as ProdutoComId : p
+      ))
+    } else {
+      const newId = Math.max(...produtos.map(p => p.id)) + 1
+      setProdutos(prev => [...prev, { ...produtoData, id: newId } as ProdutoComId])
+    }
+    setEditingProduto(undefined)
+  }
+
+  const handleEditProduto = (produto: ProdutoComId) => {
+    setEditingProduto(produto)
+    setFormOpen(true)
+  }
+
+  const handleDeleteProduto = (id: number) => {
+    setProdutoToDelete(id)
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmDelete = () => {
+    if (produtoToDelete) {
+      setProdutos(prev => prev.filter(p => p.id !== produtoToDelete))
+      toast({
+        title: "Produto excluído",
+        description: "O produto foi removido com sucesso.",
+      })
+    }
+    setDeleteDialogOpen(false)
+    setProdutoToDelete(null)
+  }
 
   return (
     <SidebarProvider>
@@ -99,7 +154,7 @@ const Produtos = () => {
                   <AlertTriangle className="h-4 w-4 mr-2" />
                   Baixo Estoque ({produtosBaixoEstoque.length})
                 </Button>
-                <Button>
+                <Button onClick={() => setFormOpen(true)}>
                   <Plus className="h-4 w-4 mr-2" />
                   Novo Produto
                 </Button>
@@ -109,14 +164,16 @@ const Produtos = () => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
               <Card>
                 <CardContent className="p-4">
-                  <div className="text-2xl font-bold text-primary">248</div>
+                  <div className="text-2xl font-bold text-primary">{produtos.length}</div>
                   <div className="text-sm text-muted-foreground">Total Produtos</div>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-4">
-                  <div className="text-2xl font-bold text-green-600">210</div>
-                  <div className="text-sm text-muted-foreground">Em Estoque</div>
+                  <div className="text-2xl font-bold text-green-600">
+                    {produtos.filter(p => p.status === 'Ativo').length}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Ativos</div>
                 </CardContent>
               </Card>
               <Card>
@@ -127,7 +184,9 @@ const Produtos = () => {
               </Card>
               <Card>
                 <CardContent className="p-4">
-                  <div className="text-2xl font-bold text-blue-600">R$ 125k</div>
+                  <div className="text-2xl font-bold text-blue-600">
+                    R$ {(valorTotalEstoque / 1000).toFixed(0)}k
+                  </div>
                   <div className="text-sm text-muted-foreground">Valor Total Estoque</div>
                 </CardContent>
               </Card>
@@ -216,10 +275,20 @@ const Produtos = () => {
                             <Button variant="ghost" size="sm" title="Visualizar">
                               <Eye className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm" title="Editar">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              title="Editar"
+                              onClick={() => handleEditProduto(produto)}
+                            >
                               <Edit className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm" title="Excluir">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              title="Excluir"
+                              onClick={() => handleDeleteProduto(produto.id)}
+                            >
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
@@ -228,17 +297,33 @@ const Produtos = () => {
                     ))}
                   </TableBody>
                 </Table>
-                
-                <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-blue-800">
-                    <strong>Próxima Fase:</strong> Implementaremos ficha técnica completa (BOM), cálculo automático de custos, controle de lotes e integração com produção.
-                  </p>
-                </div>
               </CardContent>
             </Card>
           </main>
         </SidebarInset>
       </div>
+
+      <ProdutoForm
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        produto={editingProduto}
+        onSave={handleSaveProduto}
+      />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir este produto? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </SidebarProvider>
   )
 }
