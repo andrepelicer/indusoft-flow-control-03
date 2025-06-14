@@ -79,7 +79,7 @@
   /* Responsividade melhorada para mobile */
   @media (max-width: 768px) {
     .container {
-      @apply px-4;
+      @apply px-3;
     }
     
     /* Ajustes para tabelas em dispositivos móveis */
@@ -88,21 +88,67 @@
     }
     
     .table-responsive table {
-      @apply min-w-full;
+      @apply min-w-full text-sm;
     }
     
     /* Formulários responsivos */
     .form-grid {
-      @apply grid-cols-1 sm:grid-cols-2;
+      @apply grid-cols-1 sm:grid-cols-2 gap-3;
     }
     
     .form-grid-3 {
-      @apply grid-cols-1 sm:grid-cols-2 lg:grid-cols-3;
+      @apply grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3;
     }
     
     /* Cards responsivos */
     .card-grid {
-      @apply grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+      @apply grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3;
+    }
+
+    /* Ajustes para botões em mobile */
+    .mobile-button-stack {
+      @apply flex-col w-full space-y-2 space-x-0;
+    }
+
+    /* Ajustes para headers de página */
+    .page-header {
+      @apply flex-col items-start space-y-3;
+    }
+  }
+
+  /* Responsividade específica para tablets */
+  @media (min-width: 768px) and (max-width: 1024px) {
+    .container {
+      @apply px-4;
+    }
+    
+    .form-grid-3 {
+      @apply grid-cols-2;
+    }
+  }
+
+  /* Melhorias para telas pequenas */
+  @media (max-width: 640px) {
+    .mobile-hidden {
+      @apply hidden;
+    }
+    
+    .mobile-full {
+      @apply w-full;
+    }
+    
+    .mobile-stack {
+      @apply flex-col space-y-2 space-x-0;
+    }
+
+    /* Textos menores em mobile */
+    .mobile-text-sm {
+      @apply text-sm;
+    }
+
+    /* Padding reduzido em mobile */
+    .mobile-p-2 {
+      @apply p-2;
     }
   }
 }
@@ -125,18 +171,10 @@
   @apply transition-all duration-200 ease-in-out;
 }
 
-/* Melhorias de responsividade */
-@media (max-width: 640px) {
-  .mobile-hidden {
-    @apply hidden;
-  }
-  
-  .mobile-full {
-    @apply w-full;
-  }
-  
-  .mobile-stack {
-    @apply flex-col space-y-2 space-x-0;
+/* Melhorias de acessibilidade */
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-transition {
+    @apply transition-none;
   }
 }
 
@@ -148,5 +186,16 @@
   
   .sidebar {
     @apply hidden;
+  }
+  
+  .mobile-hidden {
+    @apply block;
+  }
+}
+
+/* Estilos específicos para o sidebar responsivo */
+@media (max-width: 768px) {
+  [data-sidebar="sidebar"] {
+    @apply w-full;
   }
 }
