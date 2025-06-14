@@ -5,21 +5,8 @@ import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Plus, Trash2, Search, Settings } from "lucide-react"
+import { Plus, Trash2, Search, Settings, X } from "lucide-react"
 import { ItemPedidoExpandido } from "@/lib/validations"
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
 import { Badge } from "@/components/ui/badge"
 import { 
   Dialog, 
@@ -57,8 +44,8 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
     precoUnitario: 0,
     desconto: 0
   })
-  const [open, setOpen] = useState(false)
-  const [searchValue, setSearchValue] = useState("")
+  const [searchTerm, setSearchTerm] = useState("")
+  const [showDropdown, setShowDropdown] = useState(false)
   const [ordemProducaoDialog, setOrdemProducaoDialog] = useState(false)
   const [itemSelecionado, setItemSelecionado] = useState<ItemPedidoExpandido | null>(null)
 
@@ -107,7 +94,8 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
       precoUnitario: 0,
       desconto: 0
     })
-    setSearchValue("")
+    setSearchTerm("")
+    setShowDropdown(false)
   }
 
   const removerItem = (id: number) => {
@@ -136,8 +124,18 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
       produtoId: produto.id,
       precoUnitario: produto.precoVenda
     })
-    setSearchValue(`${produto.codigo} - ${produto.nome}`)
-    setOpen(false)
+    setSearchTerm(`${produto.codigo} - ${produto.nome}`)
+    setShowDropdown(false)
+  }
+
+  const limparSelecao = () => {
+    setNovoItem({
+      ...novoItem,
+      produtoId: undefined,
+      precoUnitario: 0
+    })
+    setSearchTerm("")
+    setShowDropdown(false)
   }
 
   const gerarOrdemProducao = (item: ItemPedidoExpandido) => {
@@ -163,12 +161,11 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
   }
 
   const produtosFiltrados = produtosMock.filter(produto =>
-    produto.nome.toLowerCase().includes(searchValue.toLowerCase()) ||
-    produto.codigo.toLowerCase().includes(searchValue.toLowerCase())
+    produto.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    produto.codigo.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  console.log('Search value:', searchValue)
-  console.log('Produtos filtrados:', produtosFiltrados)
+  const produtoSelecionado = novoItem.produtoId ? produtosMock.find(p => p.id === novoItem.produtoId) : null
 
   return (
     <Card>
@@ -178,53 +175,60 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
       <CardContent className="space-y-4">
         {/* Formulário para adicionar novo item */}
         <div className="grid grid-cols-1 md:grid-cols-6 gap-2 p-4 border rounded-lg">
-          <div>
-            <Popover open={open} onOpenChange={setOpen}>
-              <PopoverTrigger asChild>
+          <div className="relative">
+            <div className="flex">
+              <Input
+                placeholder="Buscar produto por nome ou código..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value)
+                  setShowDropdown(true)
+                }}
+                onFocus={() => setShowDropdown(true)}
+                className="pr-8"
+              />
+              {produtoSelecionado && (
                 <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={open}
-                  className="w-full justify-between"
+                  variant="ghost"
+                  size="sm"
+                  onClick={limparSelecao}
+                  className="ml-1 h-10 w-10 p-0"
                 >
-                  {searchValue || "Buscar produto..."}
-                  <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  <X className="h-4 w-4" />
                 </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[400px] p-0" align="start">
-                <Command shouldFilter={false}>
-                  <CommandInput 
-                    placeholder="Digite o nome ou código do produto..." 
-                    value={searchValue}
-                    onValueChange={(value) => {
-                      console.log('CommandInput value changed:', value)
-                      setSearchValue(value)
-                    }}
-                  />
-                  <CommandList>
-                    <CommandEmpty>Nenhum produto encontrado.</CommandEmpty>
-                    <CommandGroup>
-                      {produtosFiltrados.map((produto) => (
-                        <CommandItem
-                          key={produto.id}
-                          value={`${produto.codigo} ${produto.nome}`}
-                          onSelect={() => selecionarProduto(produto)}
-                          className="cursor-pointer"
-                        >
-                          <div className="flex flex-col">
-                            <span className="font-medium">{produto.nome}</span>
-                            <span className="text-sm text-muted-foreground">
-                              {produto.codigo} - R$ {produto.precoVenda.toFixed(2)}
-                            </span>
-                          </div>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
+              )}
+            </div>
+            
+            {showDropdown && searchTerm && (
+              <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                {produtosFiltrados.length > 0 ? (
+                  produtosFiltrados.map((produto) => (
+                    <div
+                      key={produto.id}
+                      className="p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
+                      onClick={() => selecionarProduto(produto)}
+                    >
+                      <div className="font-medium">{produto.nome}</div>
+                      <div className="text-sm text-gray-500">
+                        {produto.codigo} - R$ {produto.precoVenda.toFixed(2)}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-3 text-gray-500 text-center">
+                    Nenhum produto encontrado
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {produtoSelecionado && (
+              <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-sm">
+                <strong>Selecionado:</strong> {produtoSelecionado.nome} ({produtoSelecionado.codigo})
+              </div>
+            )}
           </div>
+          
           <div>
             <Input
               type="number"
