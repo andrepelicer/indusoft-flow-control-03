@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useState, useEffect } from "react"
 
 interface ContaReceber {
@@ -16,17 +17,35 @@ interface ContaReceber {
   status: "Pendente" | "Pago" | "Vencido" | "Parcial"
 }
 
+interface MeioPagamento {
+  id: number
+  nome: string
+  tipo: string
+  ativo: boolean
+}
+
 interface RecebimentoModalProps {
   contaId: number | null
   contas: ContaReceber[]
   isOpen: boolean
   onClose: () => void
-  onConfirm: (contaId: number, dataRecebimento: string, valorPago: number) => void
+  onConfirm: (contaId: number, dataRecebimento: string, valorPago: number, meioPagamentoId: number) => void
 }
 
 export function RecebimentoModal({ contaId, contas, isOpen, onClose, onConfirm }: RecebimentoModalProps) {
   const [dataRecebimento, setDataRecebimento] = useState(new Date().toISOString().split('T')[0])
   const [valorPago, setValorPago] = useState('')
+  const [meioPagamentoSelecionado, setMeioPagamentoSelecionado] = useState<string>('')
+
+  // Mock dos meios de pagamento - em uma aplicação real, viria de uma API ou context
+  const [meiosPagamento] = useState<MeioPagamento[]>([
+    { id: 1, nome: "Dinheiro", tipo: "Dinheiro", ativo: true },
+    { id: 2, nome: "PIX", tipo: "PIX", ativo: true },
+    { id: 3, nome: "Cartão de Crédito", tipo: "Cartão de Crédito", ativo: true },
+    { id: 4, nome: "Cartão de Débito", tipo: "Cartão de Débito", ativo: true },
+    { id: 5, nome: "Transferência", tipo: "Transferência", ativo: true },
+    { id: 6, nome: "Boleto", tipo: "Boleto", ativo: true }
+  ])
 
   const conta = contas.find(c => c.id === contaId)
   const saldoDevedor = conta ? conta.valorOriginal - (conta.valorPago || 0) : 0
@@ -35,16 +54,19 @@ export function RecebimentoModal({ contaId, contas, isOpen, onClose, onConfirm }
     if (conta && isOpen) {
       // Define o valor padrão como o saldo devedor
       setValorPago(saldoDevedor.toFixed(2))
+      setMeioPagamentoSelecionado('')
     }
   }, [conta, isOpen, saldoDevedor])
 
   const handleConfirm = () => {
-    if (contaId && valorPago) {
+    if (contaId && valorPago && meioPagamentoSelecionado) {
       const valor = parseFloat(valorPago)
-      if (valor > 0 && valor <= saldoDevedor) {
-        onConfirm(contaId, dataRecebimento, valor)
+      const meioPagamentoId = parseInt(meioPagamentoSelecionado)
+      if (valor > 0 && valor <= saldoDevedor && meioPagamentoId) {
+        onConfirm(contaId, dataRecebimento, valor, meioPagamentoId)
         onClose()
         setValorPago('')
+        setMeioPagamentoSelecionado('')
       }
     }
   }
@@ -55,6 +77,8 @@ export function RecebimentoModal({ contaId, contas, isOpen, onClose, onConfirm }
       currency: 'BRL'
     }).format(value)
   }
+
+  const meiosPagamentoAtivos = meiosPagamento.filter(meio => meio.ativo)
 
   if (!conta) return null
 
@@ -110,6 +134,22 @@ export function RecebimentoModal({ contaId, contas, isOpen, onClose, onConfirm }
               Valor máximo: {formatCurrency(saldoDevedor)}
             </p>
           </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="meioPagamento">Meio de Pagamento</Label>
+            <Select value={meioPagamentoSelecionado} onValueChange={setMeioPagamentoSelecionado}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o meio de pagamento" />
+              </SelectTrigger>
+              <SelectContent>
+                {meiosPagamentoAtivos.map((meio) => (
+                  <SelectItem key={meio.id} value={meio.id.toString()}>
+                    {meio.nome} ({meio.tipo})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           
           <div className="pt-4 border-t flex gap-2 justify-end">
             <Button variant="outline" onClick={onClose}>
@@ -117,7 +157,7 @@ export function RecebimentoModal({ contaId, contas, isOpen, onClose, onConfirm }
             </Button>
             <Button 
               onClick={handleConfirm}
-              disabled={!valorPago || parseFloat(valorPago) <= 0 || parseFloat(valorPago) > saldoDevedor}
+              disabled={!valorPago || !meioPagamentoSelecionado || parseFloat(valorPago) <= 0 || parseFloat(valorPago) > saldoDevedor}
             >
               Confirmar Recebimento
             </Button>

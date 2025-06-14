@@ -26,6 +26,8 @@ interface PagamentoParcial {
   data: string
   valor: number
   formaPagamento?: string
+  meioPagamentoId?: number
+  meioPagamentoNome?: string
 }
 
 interface ContaReceber {
@@ -60,6 +62,16 @@ export default function ContasReceber() {
   const [recebimentoModal, setRecebimentoModal] = useState({ isOpen: false, contaId: null as number | null })
   const [edicaoModal, setEdicaoModal] = useState({ isOpen: false, conta: null as ContaReceber | null })
   
+  // Mock dos meios de pagamento
+  const [meiosPagamento] = useState([
+    { id: 1, nome: "Dinheiro", tipo: "Dinheiro", ativo: true },
+    { id: 2, nome: "PIX", tipo: "PIX", ativo: true },
+    { id: 3, nome: "Cartão de Crédito", tipo: "Cartão de Crédito", ativo: true },
+    { id: 4, nome: "Cartão de Débito", tipo: "Cartão de Débito", ativo: true },
+    { id: 5, nome: "Transferência", tipo: "Transferência", ativo: true },
+    { id: 6, nome: "Boleto", tipo: "Boleto", ativo: true }
+  ])
+  
   // Mock de clientes cadastrados (em uma aplicação real, viriam de uma API)
   const [clientes] = useState<Cliente[]>([
     { id: 1, nome: "Empresa ABC Ltda", documento: "12.345.678/0001-90", status: "Ativo" },
@@ -82,7 +94,7 @@ export default function ContasReceber() {
       status: "Pago",
       formaPagamento: "PIX",
       pagamentosRealizados: [
-        { id: 1, data: "2024-02-10", valor: 1250.00, formaPagamento: "PIX" }
+        { id: 1, data: "2024-02-10", valor: 1250.00, formaPagamento: "PIX", meioPagamentoId: 2, meioPagamentoNome: "PIX" }
       ]
     },
     {
@@ -107,8 +119,8 @@ export default function ContasReceber() {
       valorPago: 1000.00,
       status: "Parcial",
       pagamentosRealizados: [
-        { id: 2, data: "2024-02-01", valor: 500.00, formaPagamento: "PIX" },
-        { id: 3, data: "2024-02-05", valor: 500.00, formaPagamento: "Boleto" }
+        { id: 2, data: "2024-02-01", valor: 500.00, formaPagamento: "PIX", meioPagamentoId: 2, meioPagamentoNome: "PIX" },
+        { id: 3, data: "2024-02-05", valor: 500.00, formaPagamento: "Boleto", meioPagamentoId: 6, meioPagamentoNome: "Boleto" }
       ]
     }
   ])
@@ -164,9 +176,12 @@ export default function ContasReceber() {
     setEdicaoModal({ isOpen: true, conta })
   }
 
-  const handleConfirmarRecebimento = (contaId: number, dataRecebimento: string, valorPago: number) => {
+  const handleConfirmarRecebimento = (contaId: number, dataRecebimento: string, valorPago: number, meioPagamentoId: number) => {
     const conta = contas.find(c => c.id === contaId)
     if (!conta) return
+
+    const meioPagamento = meiosPagamento.find(m => m.id === meioPagamentoId)
+    if (!meioPagamento) return
 
     const novoValorPago = (conta.valorPago || 0) + valorPago
     const novoStatus = novoValorPago >= conta.valorOriginal ? "Pago" : "Parcial"
@@ -176,7 +191,9 @@ export default function ContasReceber() {
       id: Date.now(), // Em uma aplicação real, seria gerado pelo backend
       data: dataRecebimento,
       valor: valorPago,
-      formaPagamento: "PIX" // Poderia ser um campo do modal
+      formaPagamento: meioPagamento.nome,
+      meioPagamentoId: meioPagamento.id,
+      meioPagamentoNome: meioPagamento.nome
     }
 
     setContas(prev => prev.map(c => 
@@ -186,7 +203,7 @@ export default function ContasReceber() {
             status: novoStatus,
             dataPagamento: novoStatus === "Pago" ? dataRecebimento : c.dataPagamento,
             valorPago: novoValorPago,
-            formaPagamento: novoStatus === "Pago" ? "PIX" : c.formaPagamento,
+            formaPagamento: novoStatus === "Pago" ? meioPagamento.nome : c.formaPagamento,
             pagamentosRealizados: [...(c.pagamentosRealizados || []), novoPagamento]
           }
         : c
@@ -196,7 +213,7 @@ export default function ContasReceber() {
     
     toast({
       title: "Recebimento registrado",
-      description: `Recebimento de ${formatCurrency(valorPago)} para ${conta.numeroDocumento} foi registrado. Status: ${statusTexto}.`,
+      description: `Recebimento de ${formatCurrency(valorPago)} via ${meioPagamento.nome} para ${conta.numeroDocumento} foi registrado. Status: ${statusTexto}.`,
     })
   }
 
