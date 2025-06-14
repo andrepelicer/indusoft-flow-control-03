@@ -1,5 +1,5 @@
 
-import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { AppSidebar } from "./AppSidebar"
 import { useLocation } from "react-router-dom"
 
@@ -22,7 +22,6 @@ export function Layout({ children }: LayoutProps) {
         <SidebarInset className="flex-1">
           <div className="flex h-full w-full flex-col">
             <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-              <SidebarTrigger className="-ml-1" />
               <div className="ml-auto flex items-center space-x-4">
                 <span className="text-sm text-muted-foreground hidden sm:inline">
                   InduSoft ERP Industrial
