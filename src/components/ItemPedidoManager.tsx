@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -8,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Plus, Trash2, Search, Settings, X } from "lucide-react"
 import { ItemPedidoExpandido } from "@/lib/validations"
 import { Badge } from "@/components/ui/badge"
-import { OrdemProducaoDialog } from "./OrdemProducaoDialog"
+import { OrdemProducaoModal } from "./OrdemProducaoModal"
 
 interface ItemPedidoManagerProps {
   itens: ItemPedidoExpandido[]
@@ -39,7 +38,7 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
   })
   const [searchTerm, setSearchTerm] = useState("")
   const [showDropdown, setShowDropdown] = useState(false)
-  const [ordemProducaoOpen, setOrdemProducaoOpen] = useState(false)
+  const [modalOPAberto, setModalOPAberto] = useState(false)
   const [itemSelecionadoOP, setItemSelecionadoOP] = useState<ItemPedidoExpandido | null>(null)
 
   const calcularSubtotal = (item: ItemPedidoExpandido) => {
@@ -134,15 +133,13 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
   const abrirOrdemProducao = (item: ItemPedidoExpandido) => {
     console.log('Abrindo ordem de produção para item:', item)
     setItemSelecionadoOP(item)
-    setOrdemProducaoOpen(true)
+    setModalOPAberto(true)
   }
 
-  const fecharOrdemProducao = (open: boolean) => {
-    console.log('Fechando ordem de produção, novo estado:', open)
-    setOrdemProducaoOpen(open)
-    if (!open) {
-      setItemSelecionadoOP(null)
-    }
+  const fecharOrdemProducao = () => {
+    console.log('Fechando modal de ordem de produção')
+    setModalOPAberto(false)
+    setItemSelecionadoOP(null)
   }
 
   const produtosFiltrados = produtosMock.filter(produto =>
@@ -153,208 +150,210 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
   const produtoSelecionado = novoItem.produtoId ? produtosMock.find(p => p.id === novoItem.produtoId) : null
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Itens do Pedido</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Formulário para adicionar novo item */}
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-2 p-4 border rounded-lg">
-          <div className="relative">
-            <div className="flex">
-              <Input
-                placeholder="Buscar produto por nome ou código..."
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value)
-                  setShowDropdown(true)
-                }}
-                onFocus={() => setShowDropdown(true)}
-                className="pr-8"
-              />
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>Itens do Pedido</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Formulário para adicionar novo item */}
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-2 p-4 border rounded-lg">
+            <div className="relative">
+              <div className="flex">
+                <Input
+                  placeholder="Buscar produto por nome ou código..."
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value)
+                    setShowDropdown(true)
+                  }}
+                  onFocus={() => setShowDropdown(true)}
+                  className="pr-8"
+                />
+                {produtoSelecionado && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={limparSelecao}
+                    className="ml-1 h-10 w-10 p-0"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+              
+              {showDropdown && searchTerm && (
+                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                  {produtosFiltrados.length > 0 ? (
+                    produtosFiltrados.map((produto) => (
+                      <div
+                        key={produto.id}
+                        className="p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
+                        onClick={() => selecionarProduto(produto)}
+                      >
+                        <div className="font-medium">{produto.nome}</div>
+                        <div className="text-sm text-gray-500">
+                          {produto.codigo} - R$ {produto.precoVenda.toFixed(2)}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="p-3 text-gray-500 text-center">
+                      Nenhum produto encontrado
+                    </div>
+                  )}
+                </div>
+              )}
+              
               {produtoSelecionado && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={limparSelecao}
-                  className="ml-1 h-10 w-10 p-0"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
+                <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-sm">
+                  <strong>Selecionado:</strong> {produtoSelecionado.nome} ({produtoSelecionado.codigo})
+                </div>
               )}
             </div>
             
-            {showDropdown && searchTerm && (
-              <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                {produtosFiltrados.length > 0 ? (
-                  produtosFiltrados.map((produto) => (
-                    <div
-                      key={produto.id}
-                      className="p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
-                      onClick={() => selecionarProduto(produto)}
-                    >
-                      <div className="font-medium">{produto.nome}</div>
-                      <div className="text-sm text-gray-500">
-                        {produto.codigo} - R$ {produto.precoVenda.toFixed(2)}
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="p-3 text-gray-500 text-center">
-                    Nenhum produto encontrado
-                  </div>
-                )}
-              </div>
-            )}
-            
-            {produtoSelecionado && (
-              <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-sm">
-                <strong>Selecionado:</strong> {produtoSelecionado.nome} ({produtoSelecionado.codigo})
-              </div>
-            )}
+            <div>
+              <Input
+                type="number"
+                placeholder="Qtd"
+                min="1"
+                value={novoItem.quantidade || ''}
+                onChange={(e) => setNovoItem({...novoItem, quantidade: Number(e.target.value)})}
+              />
+            </div>
+            <div>
+              <Input
+                type="number"
+                step="0.01"
+                placeholder="Preço"
+                min="0"
+                value={novoItem.precoUnitario || ''}
+                onChange={(e) => setNovoItem({...novoItem, precoUnitario: Number(e.target.value)})}
+              />
+            </div>
+            <div>
+              <Input
+                type="number"
+                step="0.01"
+                placeholder="Desc %"
+                min="0"
+                max="100"
+                value={novoItem.desconto || ''}
+                onChange={(e) => setNovoItem({...novoItem, desconto: Number(e.target.value)})}
+              />
+            </div>
+            <div className="md:col-span-2">
+              <Button 
+                onClick={adicionarItem} 
+                className="w-full"
+                disabled={!novoItem.produtoId || !novoItem.quantidade || !novoItem.precoUnitario}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Adicionar
+              </Button>
+            </div>
           </div>
-          
-          <div>
-            <Input
-              type="number"
-              placeholder="Qtd"
-              min="1"
-              value={novoItem.quantidade || ''}
-              onChange={(e) => setNovoItem({...novoItem, quantidade: Number(e.target.value)})}
-            />
-          </div>
-          <div>
-            <Input
-              type="number"
-              step="0.01"
-              placeholder="Preço"
-              min="0"
-              value={novoItem.precoUnitario || ''}
-              onChange={(e) => setNovoItem({...novoItem, precoUnitario: Number(e.target.value)})}
-            />
-          </div>
-          <div>
-            <Input
-              type="number"
-              step="0.01"
-              placeholder="Desc %"
-              min="0"
-              max="100"
-              value={novoItem.desconto || ''}
-              onChange={(e) => setNovoItem({...novoItem, desconto: Number(e.target.value)})}
-            />
-          </div>
-          <div className="md:col-span-2">
-            <Button 
-              onClick={adicionarItem} 
-              className="w-full"
-              disabled={!novoItem.produtoId || !novoItem.quantidade || !novoItem.precoUnitario}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Adicionar
-            </Button>
-          </div>
-        </div>
 
-        {/* Tabela de itens */}
-        {itens.length > 0 && (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Produto</TableHead>
-                <TableHead>Qtd</TableHead>
-                <TableHead>Preço Unit.</TableHead>
-                <TableHead>Desc %</TableHead>
-                <TableHead>Subtotal</TableHead>
-                <TableHead>Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {itens.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>
-                    <div>
-                      <div className="font-medium">{item.produto?.nome}</div>
-                      <div className="text-sm text-muted-foreground">{item.produto?.codigo}</div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      type="number"
-                      min="1"
-                      value={item.quantidade}
-                      onChange={(e) => atualizarItem(item.id!, 'quantidade', Number(e.target.value))}
-                      className="w-20"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={item.precoUnitario}
-                      onChange={(e) => atualizarItem(item.id!, 'precoUnitario', Number(e.target.value))}
-                      className="w-24"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      max="100"
-                      value={item.desconto || 0}
-                      onChange={(e) => atualizarItem(item.id!, 'desconto', Number(e.target.value))}
-                      className="w-20"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    R$ {calcularSubtotal(item).toFixed(2)}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        title="Gerar Ordem de Produção"
-                        onClick={() => abrirOrdemProducao(item)}
-                      >
-                        <Settings className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        title="Remover"
-                        onClick={() => removerItem(item.id!)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
+          {/* Tabela de itens */}
+          {itens.length > 0 && (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Produto</TableHead>
+                  <TableHead>Qtd</TableHead>
+                  <TableHead>Preço Unit.</TableHead>
+                  <TableHead>Desc %</TableHead>
+                  <TableHead>Subtotal</TableHead>
+                  <TableHead>Ações</TableHead>
                 </TableRow>
-              ))}
-              <TableRow className="bg-muted/50">
-                <TableCell colSpan={4} className="font-semibold">Total Geral:</TableCell>
-                <TableCell className="font-bold">R$ {calcularTotal(itens).toFixed(2)}</TableCell>
-                <TableCell></TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        )}
+              </TableHeader>
+              <TableBody>
+                {itens.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell>
+                      <div>
+                        <div className="font-medium">{item.produto?.nome}</div>
+                        <div className="text-sm text-muted-foreground">{item.produto?.codigo}</div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={item.quantidade}
+                        onChange={(e) => atualizarItem(item.id!, 'quantidade', Number(e.target.value))}
+                        className="w-20"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={item.precoUnitario}
+                        onChange={(e) => atualizarItem(item.id!, 'precoUnitario', Number(e.target.value))}
+                        className="w-24"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="100"
+                        value={item.desconto || 0}
+                        onChange={(e) => atualizarItem(item.id!, 'desconto', Number(e.target.value))}
+                        className="w-20"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      R$ {calcularSubtotal(item).toFixed(2)}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          title="Gerar Ordem de Produção"
+                          onClick={() => abrirOrdemProducao(item)}
+                        >
+                          <Settings className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          title="Remover"
+                          onClick={() => removerItem(item.id!)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                <TableRow className="bg-muted/50">
+                  <TableCell colSpan={4} className="font-semibold">Total Geral:</TableCell>
+                  <TableCell className="font-bold">R$ {calcularTotal(itens).toFixed(2)}</TableCell>
+                  <TableCell></TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          )}
 
-        {itens.length === 0 && (
-          <div className="text-center py-8 text-muted-foreground">
-            Nenhum item adicionado ao pedido
-          </div>
-        )}
+          {itens.length === 0 && (
+            <div className="text-center py-8 text-muted-foreground">
+              Nenhum item adicionado ao pedido
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-        {/* Modal para Ordem de Produção */}
-        <OrdemProducaoDialog
-          open={ordemProducaoOpen}
-          onOpenChange={fecharOrdemProducao}
-          item={itemSelecionadoOP}
-        />
-      </CardContent>
-    </Card>
+      {/* Modal para Ordem de Produção */}
+      <OrdemProducaoModal
+        isOpen={modalOPAberto}
+        onClose={fecharOrdemProducao}
+        item={itemSelecionadoOP}
+      />
+    </>
   )
 }
