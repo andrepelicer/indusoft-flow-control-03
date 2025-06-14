@@ -4,8 +4,11 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { CreditCard, Plus, Search, DollarSign, AlertCircle, CheckCircle, Undo2 } from "lucide-react"
+import { CreditCard, Plus, Search, DollarSign, AlertCircle, CheckCircle, Undo2, Eye } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { ContaDetalhesModal } from "@/components/contas-receber/ContaDetalhesModal"
+import { RecebimentoModal } from "@/components/contas-receber/RecebimentoModal"
+import { ContaEdicaoModal } from "@/components/contas-receber/ContaEdicaoModal"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,6 +38,11 @@ export default function ContasReceber() {
   const { toast } = useToast()
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
+  
+  // Modals state
+  const [detalhesModal, setDetalhesModal] = useState({ isOpen: false, conta: null as ContaReceber | null })
+  const [recebimentoModal, setRecebimentoModal] = useState({ isOpen: false, contaId: null as number | null })
+  const [edicaoModal, setEdicaoModal] = useState({ isOpen: false, conta: null as ContaReceber | null })
   
   const [contas, setContas] = useState<ContaReceber[]>([
     {
@@ -109,7 +117,19 @@ export default function ContasReceber() {
     }
   }
 
-  const handleReceberPagamento = (contaId: number) => {
+  const openDetalhes = (conta: ContaReceber) => {
+    setDetalhesModal({ isOpen: true, conta })
+  }
+
+  const openRecebimento = (contaId: number) => {
+    setRecebimentoModal({ isOpen: true, contaId })
+  }
+
+  const openEdicao = (conta: ContaReceber) => {
+    setEdicaoModal({ isOpen: true, conta })
+  }
+
+  const handleConfirmarRecebimento = (contaId: number, dataRecebimento: string) => {
     const conta = contas.find(c => c.id === contaId)
     if (!conta) return
 
@@ -118,7 +138,7 @@ export default function ContasReceber() {
         ? { 
             ...c, 
             status: "Pago",
-            dataPagamento: new Date().toISOString().split('T')[0],
+            dataPagamento: dataRecebimento,
             valorPago: c.valorOriginal,
             formaPagamento: "PIX"
           }
@@ -126,8 +146,8 @@ export default function ContasReceber() {
     ))
 
     toast({
-      title: "Pagamento registrado",
-      description: `Pagamento de ${conta.numeroDocumento} foi registrado com sucesso.`,
+      title: "Recebimento registrado",
+      description: `Recebimento de ${conta.numeroDocumento} foi registrado com sucesso.`,
     })
   }
 
@@ -152,10 +172,23 @@ export default function ContasReceber() {
         : c
     ))
 
+    setDetalhesModal({ isOpen: false, conta: null })
+
     toast({
-      title: "Pagamento estornado",
-      description: `O pagamento de ${conta.numeroDocumento} foi estornado com sucesso.`,
+      title: "Recebimento estornado",
+      description: `O recebimento de ${conta.numeroDocumento} foi estornado com sucesso.`,
       variant: "destructive"
+    })
+  }
+
+  const handleSalvarEdicao = (contaEditada: ContaReceber) => {
+    setContas(prev => prev.map(c => 
+      c.id === contaEditada.id ? contaEditada : c
+    ))
+
+    toast({
+      title: "Conta atualizada",
+      description: `A conta ${contaEditada.numeroDocumento} foi atualizada com sucesso.`,
     })
   }
 
@@ -179,7 +212,6 @@ export default function ContasReceber() {
         </Button>
       </div>
 
-      {/* Cards de Resumo */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4">
@@ -344,10 +376,18 @@ export default function ContasReceber() {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => openDetalhes(conta)}
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          Detalhes
+                        </Button>
                         {conta.status !== "Pago" && (
                           <Button
                             size="sm"
-                            onClick={() => handleReceberPagamento(conta.id)}
+                            onClick={() => openRecebimento(conta.id)}
                           >
                             Receber
                           </Button>
@@ -367,7 +407,7 @@ export default function ContasReceber() {
                               <AlertDialogHeader>
                                 <AlertDialogTitle>Confirmar Estorno</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  Tem certeza que deseja estornar o pagamento de {conta.numeroDocumento}?
+                                  Tem certeza que deseja estornar o recebimento de {conta.numeroDocumento}?
                                   Esta ação desfará o recebimento de {formatCurrency(conta.valorPago || 0)} e 
                                   voltará a conta para o status pendente.
                                 </AlertDialogDescription>
@@ -378,7 +418,7 @@ export default function ContasReceber() {
                                   onClick={() => handleEstornarPagamento(conta.id)}
                                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                 >
-                                  Estornar Pagamento
+                                  Estornar Recebimento
                                 </AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>
@@ -393,6 +433,33 @@ export default function ContasReceber() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Modals */}
+      <ContaDetalhesModal
+        conta={detalhesModal.conta}
+        isOpen={detalhesModal.isOpen}
+        onClose={() => setDetalhesModal({ isOpen: false, conta: null })}
+        onReceber={openRecebimento}
+        onEditar={(id) => {
+          const conta = contas.find(c => c.id === id)
+          if (conta) openEdicao(conta)
+        }}
+        onEstornar={handleEstornarPagamento}
+      />
+
+      <RecebimentoModal
+        contaId={recebimentoModal.contaId}
+        isOpen={recebimentoModal.isOpen}
+        onClose={() => setRecebimentoModal({ isOpen: false, contaId: null })}
+        onConfirm={handleConfirmarRecebimento}
+      />
+
+      <ContaEdicaoModal
+        conta={edicaoModal.conta}
+        isOpen={edicaoModal.isOpen}
+        onClose={() => setEdicaoModal({ isOpen: false, conta: null })}
+        onSave={handleSalvarEdicao}
+      />
     </div>
   )
 }
