@@ -1,11 +1,10 @@
-import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar"
-import { AppSidebar } from "@/components/AppSidebar"
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Users, Plus, Search, Edit, Trash2 } from "lucide-react"
+import { Plus, Search, Edit, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { ClienteForm } from "@/components/ClienteForm"
 import { type Cliente } from "@/lib/validations"
@@ -113,156 +112,141 @@ const Clientes = () => {
   }
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
-        <AppSidebar />
-        <SidebarInset className="flex-1">
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b border-border px-4">
-            <SidebarTrigger className="-ml-1" />
-            <div className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              <h1 className="text-lg font-semibold">Clientes</h1>
-            </div>
-          </header>
-          
-          <main className="flex-1 p-6">
-            <div className="flex justify-between items-center mb-6">
-              <div>
-                <h2 className="text-2xl font-bold">Gestão de Clientes</h2>
-                <p className="text-muted-foreground">Cadastro de pessoas físicas e jurídicas</p>
-              </div>
-              <Button onClick={handleNewCliente}>
-                <Plus className="h-4 w-4 mr-2" />
-                Novo Cliente
-              </Button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-              <Card>
-                <CardContent className="p-4">
-                  <div className="text-2xl font-bold text-primary">{clientes.length}</div>
-                  <div className="text-sm text-muted-foreground">Total Clientes</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <div className="text-2xl font-bold text-green-600">
-                    {clientes.filter(c => c.status === 'Ativo').length}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Ativos</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <div className="text-2xl font-bold text-blue-600">
-                    {clientes.filter(c => c.tipo === 'PJ').length}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Pessoas Jurídicas</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <div className="text-2xl font-bold text-purple-600">
-                    R$ {clientes.reduce((sum, c) => sum + c.limiteCredito, 0).toLocaleString('pt-BR')}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Limite Total</div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle>Filtros</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex gap-4">
-                  <div className="flex-1">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                      <Input
-                        placeholder="Buscar por nome, documento ou e-mail..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-                  </div>
-                  <Button variant="outline">Filtros Avançados</Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Lista de Clientes</CardTitle>
-                <CardDescription>
-                  {filteredClientes.length} cliente(s) encontrado(s)
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nome/Razão Social</TableHead>
-                      <TableHead>Tipo</TableHead>
-                      <TableHead>Documento</TableHead>
-                      <TableHead>Contato</TableHead>
-                      <TableHead>Cidade</TableHead>
-                      <TableHead>Limite Crédito</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredClientes.map((cliente) => (
-                      <TableRow key={cliente.id}>
-                        <TableCell className="font-medium">{cliente.nome}</TableCell>
-                        <TableCell>
-                          <Badge variant={cliente.tipo === 'PJ' ? 'default' : 'secondary'}>
-                            {cliente.tipo}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="font-mono text-sm">{cliente.documento}</TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            <div className="text-sm">{cliente.email}</div>
-                            <div className="text-sm text-muted-foreground">{cliente.telefone}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell>{cliente.cidade}</TableCell>
-                        <TableCell>R$ {cliente.limiteCredito.toLocaleString('pt-BR')}</TableCell>
-                        <TableCell>
-                          <Badge variant={cliente.status === 'Ativo' ? 'default' : 'secondary'}>
-                            {cliente.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handleEditCliente(cliente)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handleDeleteCliente(cliente.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </main>
-        </SidebarInset>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold">Gestão de Clientes</h2>
+          <p className="text-muted-foreground">Cadastro de pessoas físicas e jurídicas</p>
+        </div>
+        <Button onClick={handleNewCliente}>
+          <Plus className="h-4 w-4 mr-2" />
+          Novo Cliente
+        </Button>
       </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-primary">{clientes.length}</div>
+            <div className="text-sm text-muted-foreground">Total Clientes</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-green-600">
+              {clientes.filter(c => c.status === 'Ativo').length}
+            </div>
+            <div className="text-sm text-muted-foreground">Ativos</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-blue-600">
+              {clientes.filter(c => c.tipo === 'PJ').length}
+            </div>
+            <div className="text-sm text-muted-foreground">Pessoas Jurídicas</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-purple-600">
+              R$ {clientes.reduce((sum, c) => sum + c.limiteCredito, 0).toLocaleString('pt-BR')}
+            </div>
+            <div className="text-sm text-muted-foreground">Limite Total</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Filtros</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  placeholder="Buscar por nome, documento ou e-mail..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <Button variant="outline">Filtros Avançados</Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Lista de Clientes</CardTitle>
+          <CardDescription>
+            {filteredClientes.length} cliente(s) encontrado(s)
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome/Razão Social</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Documento</TableHead>
+                <TableHead>Contato</TableHead>
+                <TableHead>Cidade</TableHead>
+                <TableHead>Limite Crédito</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredClientes.map((cliente) => (
+                <TableRow key={cliente.id}>
+                  <TableCell className="font-medium">{cliente.nome}</TableCell>
+                  <TableCell>
+                    <Badge variant={cliente.tipo === 'PJ' ? 'default' : 'secondary'}>
+                      {cliente.tipo}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="font-mono text-sm">{cliente.documento}</TableCell>
+                  <TableCell>
+                    <div className="space-y-1">
+                      <div className="text-sm">{cliente.email}</div>
+                      <div className="text-sm text-muted-foreground">{cliente.telefone}</div>
+                    </div>
+                  </TableCell>
+                  <TableCell>{cliente.cidade}</TableCell>
+                  <TableCell>R$ {cliente.limiteCredito.toLocaleString('pt-BR')}</TableCell>
+                  <TableCell>
+                    <Badge variant={cliente.status === 'Ativo' ? 'default' : 'secondary'}>
+                      {cliente.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleEditCliente(cliente)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleDeleteCliente(cliente.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       <ClienteForm
         open={formOpen}
@@ -285,7 +269,7 @@ const Clientes = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </SidebarProvider>
+    </div>
   )
 }
 
