@@ -13,6 +13,8 @@ import Fornecedores from "./pages/Fornecedores";
 import Produtos from "./pages/Produtos";
 import Vendedores from "./pages/Vendedores";
 import TabelaPrecos from "./pages/TabelaPrecos";
+import Orcamentos from "./pages/Orcamentos";
+import PedidosVenda from "./pages/PedidosVenda";
 import Faturamento from "./pages/Faturamento";
 import NotFound from "./pages/NotFound";
 

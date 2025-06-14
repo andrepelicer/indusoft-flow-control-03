@@ -1,4 +1,3 @@
-
 import { z } from "zod"
 
 // Validação para Cliente
@@ -87,6 +86,27 @@ export const itemPedidoSchema = z.object({
   desconto: z.number().min(0).max(100, "Desconto deve estar entre 0% e 100%").optional()
 })
 
+// Validação para Orçamento
+export const orcamentoSchema = z.object({
+  numero: z.string().min(1, "Número do orçamento é obrigatório"),
+  clienteId: z.number().min(1, "Cliente é obrigatório"),
+  vendedorId: z.number().min(1, "Vendedor é obrigatório"),
+  dataOrcamento: z.string().min(1, "Data do orçamento é obrigatória"),
+  validadeOrcamento: z.string().min(1, "Data de validade é obrigatória"),
+  status: z.enum(["Pendente", "Aprovado", "Rejeitado", "Expirado"]),
+  observacoes: z.string().optional(),
+  desconto: z.number().min(0).max(100, "Desconto deve estar entre 0% e 100%").optional(),
+  valorTotal: z.number().min(0, "Valor total deve ser positivo")
+})
+
+// Validação para Item do Orçamento
+export const itemOrcamentoSchema = z.object({
+  produtoId: z.number().min(1, "Produto é obrigatório"),
+  quantidade: z.number().min(1, "Quantidade deve ser positiva"),
+  precoUnitario: z.number().min(0, "Preço unitário deve ser positivo"),
+  desconto: z.number().min(0).max(100, "Desconto deve estar entre 0% e 100%").optional()
+})
+
 export type Cliente = z.infer<typeof clienteSchema>
 export type Fornecedor = z.infer<typeof fornecedorSchema>
 export type Produto = z.infer<typeof produtoSchema>
@@ -95,3 +115,5 @@ export type TabelaPreco = z.infer<typeof tabelaPrecoSchema>
 export type ItemTabelaPreco = z.infer<typeof itemTabelaPrecoSchema>
 export type Pedido = z.infer<typeof pedidoSchema>
 export type ItemPedido = z.infer<typeof itemPedidoSchema>
+export type Orcamento = z.infer<typeof orcamentoSchema>
+export type ItemOrcamento = z.infer<typeof itemOrcamentoSchema>
