@@ -1,115 +1,141 @@
-import { Button } from "@/components/ui/button"
-import { Truck, Plus } from "lucide-react"
-import { useState } from "react"
-import { FornecedorForm } from "@/components/FornecedorForm"
-import { FornecedoresStats } from "@/components/fornecedores/FornecedoresStats"
-import { FornecedoresFilters } from "@/components/fornecedores/FornecedoresFilters"
-import { FornecedoresTable } from "@/components/fornecedores/FornecedoresTable"
-import { type Fornecedor } from "@/lib/validations"
-import { useToast } from "@/hooks/use-toast"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
 
-type FornecedorComId = Fornecedor & { 
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Building2, Plus, Search, Star, MapPin, Phone, Mail, FileText } from "lucide-react"
+import FornecedoresStats from "@/components/fornecedores/FornecedoresStats"
+import FornecedoresFilters from "@/components/fornecedores/FornecedoresFilters"
+import FornecedoresTable from "@/components/fornecedores/FornecedoresTable"
+
+export interface FornecedorComId {
   id: number
+  razaoSocial: string
+  nomeFantasia: string
+  cnpj: string
+  inscricaoEstadual?: string
+  endereco: string
+  cidade: string
+  estado: string
+  cep: string
+  telefone: string
+  email: string
+  contato: string
+  observacoes?: string
+  status?: "Ativo" | "Inativo"
+  categoria: string
   avaliacao: number
+  ultimaCompra?: string
+  totalCompras?: number
 }
 
-const Fornecedores = () => {
+export default function Fornecedores() {
   const [searchTerm, setSearchTerm] = useState("")
-  const [formOpen, setFormOpen] = useState(false)
-  const [editingFornecedor, setEditingFornecedor] = useState<FornecedorComId | undefined>()
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [fornecedorToDelete, setFornecedorToDelete] = useState<number | null>(null)
-  const { toast } = useToast()
+  const [statusFilter, setStatusFilter] = useState<string>("all")
+  const [categoriaFilter, setCategoriaFilter] = useState<string>("all")
   
-  const [fornecedores, setFornecedores] = useState<FornecedorComId[]>([
-    { 
-      id: 1, 
-      nome: "Aços Especiais Ltda", 
-      cnpj: "11.222.333/0001-44", 
+  const [fornecedores] = useState<FornecedorComId[]>([
+    {
+      id: 1,
+      razaoSocial: "Aços Especiais Ltda",
+      nomeFantasia: "Aços Especiais",
+      cnpj: "12.345.678/0001-90",
+      inscricaoEstadual: "123456789",
+      endereco: "Rua Industrial, 123",
+      cidade: "São Paulo",
+      estado: "SP",
+      cep: "01234-567",
+      telefone: "(11) 3456-7890",
+      email: "contato@acosespeciais.com.br",
+      contato: "João Silva",
+      observacoes: "Fornecedor principal de matéria-prima",
+      status: "Ativo",
       categoria: "Matéria-Prima",
-      email: "vendas@acosespeciais.com.br",
-      telefone: "(11) 3333-4444",
-      cidade: "São Bernardo do Campo",
-      status: "Ativo" as const,
-      avaliacao: 5
+      avaliacao: 4.5,
+      ultimaCompra: "2024-01-15",
+      totalCompras: 25000.00
     },
-    { 
-      id: 2, 
-      nome: "Transporte Silva & Cia", 
-      cnpj: "22.333.444/0001-55", 
-      categoria: "Serviços",
-      email: "contato@transportesilva.com",
-      telefone: "(11) 4444-5555",
-      cidade: "Santo André",
-      status: "Ativo" as const,
-      avaliacao: 4
+    {
+      id: 2,
+      razaoSocial: "Transportes Rápidos S.A.",
+      nomeFantasia: "TR Transportes",
+      cnpj: "98.765.432/0001-10",
+      endereco: "Av. Logística, 456",
+      cidade: "Santos",
+      estado: "SP",
+      cep: "11234-567",
+      telefone: "(13) 2345-6789",
+      email: "vendas@trtransportes.com.br",
+      contato: "Maria Santos",
+      status: "Ativo",
+      categoria: "Logística",
+      avaliacao: 4.0,
+      ultimaCompra: "2024-01-10",
+      totalCompras: 8500.00
     },
-    { 
-      id: 3, 
-      nome: "Ferramentas Industriais SA", 
-      cnpj: "33.444.555/0001-66", 
-      categoria: "Ferramentas",
-      email: "comercial@ferramentasindustriais.com",
-      telefone: "(11) 5555-6666",
-      cidade: "Diadema",
-      status: "Inativo" as const,
-      avaliacao: 3
-    },
+    {
+      id: 3,
+      razaoSocial: "Embalagens Premium ME",
+      nomeFantasia: "Premium Pack",
+      cnpj: "11.222.333/0001-44",
+      endereco: "Rua das Embalagens, 789",
+      cidade: "Rio de Janeiro",
+      estado: "RJ",
+      cep: "21234-567",
+      telefone: "(21) 3333-4444",
+      email: "comercial@premiumpack.com.br",
+      contato: "Carlos Oliveira",
+      status: "Inativo",
+      categoria: "Embalagens",
+      avaliacao: 3.5,
+      ultimaCompra: "2023-12-05",
+      totalCompras: 12000.00
+    }
   ])
 
-  const filteredFornecedores = fornecedores.filter(fornecedor =>
-    fornecedor.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    fornecedor.cnpj.includes(searchTerm) ||
-    fornecedor.categoria.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredFornecedores = fornecedores.filter(fornecedor => {
+    const matchesSearch = fornecedor.razaoSocial.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         fornecedor.nomeFantasia.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         fornecedor.cnpj.includes(searchTerm)
+    
+    const matchesStatus = statusFilter === "all" || fornecedor.status === statusFilter
+    const matchesCategoria = categoriaFilter === "all" || fornecedor.categoria === categoriaFilter
+    
+    return matchesSearch && matchesStatus && matchesCategoria
+  })
 
-  const handleSaveFornecedor = (fornecedorData: Fornecedor) => {
-    if (editingFornecedor) {
-      setFornecedores(prev => prev.map(f => 
-        f.id === editingFornecedor.id ? { ...fornecedorData, id: editingFornecedor.id, avaliacao: editingFornecedor.avaliacao } as FornecedorComId : f
-      ))
-    } else {
-      const newId = Math.max(...fornecedores.map(f => f.id)) + 1
-      setFornecedores(prev => [...prev, { ...fornecedorData, id: newId, avaliacao: 0 } as FornecedorComId])
-    }
-    setEditingFornecedor(undefined)
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value)
   }
 
-  const handleEditFornecedor = (fornecedor: FornecedorComId) => {
-    setEditingFornecedor(fornecedor)
-    setFormOpen(true)
+  const renderStars = (rating: number) => {
+    return (
+      <div className="flex items-center">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <Star
+            key={star}
+            className={`h-4 w-4 ${
+              star <= rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
+            }`}
+          />
+        ))}
+        <span className="ml-1 text-sm text-gray-600">({rating})</span>
+      </div>
+    )
   }
 
-  const handleDeleteFornecedor = (id: number) => {
-    setFornecedorToDelete(id)
-    setDeleteDialogOpen(true)
+  const handleEditFornecedor = (id: number) => {
+    console.log("Editar fornecedor:", id)
   }
 
-  const confirmDelete = () => {
-    if (fornecedorToDelete) {
-      setFornecedores(prev => prev.filter(f => f.id !== fornecedorToDelete))
-      toast({
-        title: "Fornecedor excluído",
-        description: "O fornecedor foi removido com sucesso.",
-      })
-    }
-    setDeleteDialogOpen(false)
-    setFornecedorToDelete(null)
-  }
-
-  const handleNewFornecedor = () => {
-    setEditingFornecedor(undefined)
-    setFormOpen(true)
+  const handleViewDetails = (id: number) => {
+    console.log("Ver detalhes do fornecedor:", id)
   }
 
   return (
@@ -117,53 +143,119 @@ const Fornecedores = () => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <Truck className="h-6 w-6" />
-            <h2 className="text-2xl font-bold">Gestão de Fornecedores</h2>
+            <Building2 className="h-6 w-6" />
+            <h2 className="text-2xl font-bold">Fornecedores</h2>
           </div>
-          <p className="text-muted-foreground">Cadastro e avaliação de fornecedores por categoria</p>
+          <p className="text-muted-foreground">Gerencie seus fornecedores e parcerias</p>
         </div>
-        <Button onClick={handleNewFornecedor} className="w-full sm:w-auto">
+        <Button className="w-full sm:w-auto">
           <Plus className="h-4 w-4 mr-2" />
           Novo Fornecedor
         </Button>
       </div>
 
-      <FornecedoresStats fornecedores={fornecedores} />
-      
-      <FornecedoresFilters 
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-      />
+      <Tabs defaultValue="lista" className="w-full">
+        <TabsList>
+          <TabsTrigger value="lista">Lista</TabsTrigger>
+          <TabsTrigger value="estatisticas">Estatísticas</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="lista" className="space-y-4">
+          <FornecedoresStats fornecedores={fornecedores} />
+          
+          <FornecedoresFilters
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            statusFilter={statusFilter}
+            setStatusFilter={setStatusFilter}
+            categoriaFilter={categoriaFilter}
+            setCategoriaFilter={setCategoriaFilter}
+          />
 
-      <FornecedoresTable
-        fornecedores={filteredFornecedores}
-        onEdit={handleEditFornecedor}
-        onDelete={handleDeleteFornecedor}
-      />
+          <FornecedoresTable
+            fornecedores={filteredFornecedores}
+            onEdit={handleEditFornecedor}
+            onViewDetails={handleViewDetails}
+          />
+        </TabsContent>
+        
+        <TabsContent value="estatisticas">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <Card>
+              <CardHeader className="text-center">
+                <CardTitle className="text-lg">Fornecedores por Categoria</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {['Matéria-Prima', 'Logística', 'Embalagens'].map((categoria) => {
+                    const count = fornecedores.filter(f => f.categoria === categoria).length
+                    const percentage = (count / fornecedores.length) * 100
+                    return (
+                      <div key={categoria} className="flex justify-between items-center">
+                        <span className="text-sm">{categoria}</span>
+                        <div className="flex items-center gap-2">
+                          <div className="w-20 bg-gray-200 rounded-full h-2">
+                            <div 
+                              className="bg-blue-600 h-2 rounded-full" 
+                              style={{ width: `${percentage}%` }}
+                            ></div>
+                          </div>
+                          <span className="text-sm font-medium">{count}</span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </CardContent>
+            </Card>
 
-      <FornecedorForm
-        open={formOpen}
-        onOpenChange={setFormOpen}
-        fornecedor={editingFornecedor}
-        onSave={handleSaveFornecedor}
-      />
+            <Card>
+              <CardHeader className="text-center">
+                <CardTitle className="text-lg">Status dos Fornecedores</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {['Ativo', 'Inativo'].map((status) => {
+                    const count = fornecedores.filter(f => f.status === status).length
+                    const percentage = (count / fornecedores.length) * 100
+                    return (
+                      <div key={status} className="flex justify-between items-center">
+                        <span className="text-sm">{status}</span>
+                        <div className="flex items-center gap-2">
+                          <div className="w-20 bg-gray-200 rounded-full h-2">
+                            <div 
+                              className={`h-2 rounded-full ${
+                                status === 'Ativo' ? 'bg-green-600' : 'bg-red-600'
+                              }`}
+                              style={{ width: `${percentage}%` }}
+                            ></div>
+                          </div>
+                          <span className="text-sm font-medium">{count}</span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </CardContent>
+            </Card>
 
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir este fornecedor? Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete}>Excluir</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            <Card>
+              <CardHeader className="text-center">
+                <CardTitle className="text-lg">Avaliação Média</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center">
+                <div className="text-3xl font-bold mb-2">
+                  {(fornecedores.reduce((sum, f) => sum + f.avaliacao, 0) / fornecedores.length).toFixed(1)}
+                </div>
+                {renderStars(fornecedores.reduce((sum, f) => sum + f.avaliacao, 0) / fornecedores.length)}
+                <p className="text-sm text-muted-foreground mt-2">
+                  Baseado em {fornecedores.length} fornecedores
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
-
-export default Fornecedores

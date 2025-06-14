@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -118,7 +117,7 @@ export default function ContasReceber() {
       c.id === contaId 
         ? { 
             ...c, 
-            status: "Pago" as const,
+            status: "Pago",
             dataPagamento: new Date().toISOString().split('T')[0],
             valorPago: c.valorOriginal,
             formaPagamento: "PIX"
@@ -145,7 +144,7 @@ export default function ContasReceber() {
       c.id === contaId 
         ? { 
             ...c, 
-            status: novoStatus as const,
+            status: novoStatus,
             dataPagamento: undefined,
             valorPago: undefined,
             formaPagamento: undefined
