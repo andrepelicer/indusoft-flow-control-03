@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,6 +8,7 @@ import { Plus, Trash2, Search, Settings, X, Factory, FactoryIcon } from "lucide-
 import { ItemPedidoExpandido } from "@/lib/validations"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
+import { useOrdensProducao } from "@/contexts/OrdensProducaoContext"
 
 interface ItemPedidoManagerProps {
   itens: ItemPedidoExpandido[]
@@ -32,6 +32,7 @@ const produtosMock = [
 
 export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemPedidoManagerProps) {
   const { toast } = useToast()
+  const { adicionarOrdem, removerOrdem, ordens } = useOrdensProducao()
   const [novoItem, setNovoItem] = useState<Partial<ItemPedidoExpandido>>({
     produtoId: undefined,
     quantidade: 1,
@@ -101,6 +102,12 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
       newSet.delete(id)
       return newSet
     })
+    
+    // Remove a ordem de produção se existir
+    const ordemExistente = ordens.find(ordem => ordem.produtoId === itens.find(item => item.id === id)?.produtoId)
+    if (ordemExistente) {
+      removerOrdem(ordemExistente.id)
+    }
   }
 
   const atualizarItem = (id: number, campo: keyof ItemPedidoExpandido, valor: any) => {
@@ -149,18 +156,28 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
       return
     }
 
-    const novaOrdem = {
-      id: Date.now(),
+    // Verifica se já existe uma ordem para este produto
+    const ordemExistente = ordens.find(ordem => ordem.produtoId === item.produtoId)
+    if (ordemExistente) {
+      toast({
+        title: "Ordem já existe",
+        description: `Já existe uma ordem de produção para ${item.produto?.nome}.`,
+        variant: "destructive"
+      })
+      return
+    }
+
+    const novaOrdem = adicionarOrdem({
       numero: `OP-${Date.now()}`,
       produtoId: item.produtoId,
-      produto: item.produto?.nome,
-      codigo: item.produto?.codigo,
+      produto: item.produto?.nome || '',
+      codigo: item.produto?.codigo || '',
       quantidade: item.quantidade,
       status: 'Pendente',
       dataCriacao: new Date().toISOString().split('T')[0],
       dataPrevisao: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 7 dias a partir de hoje
       observacoes: `Ordem gerada automaticamente do pedido de venda para ${item.produto?.nome}`
-    }
+    })
     
     console.log('Ordem de Produção criada:', novaOrdem)
     
@@ -175,6 +192,12 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
 
   const cancelarOrdemProducao = (item: ItemPedidoExpandido) => {
     console.log('Cancelando ordem de produção para item:', item)
+    
+    // Encontra e remove a ordem de produção
+    const ordemExistente = ordens.find(ordem => ordem.produtoId === item.produtoId)
+    if (ordemExistente) {
+      removerOrdem(ordemExistente.id)
+    }
     
     // Remove o item da lista de itens com OP
     setItensComOP(prev => {
@@ -195,6 +218,11 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
   )
 
   const produtoSelecionado = novoItem.produtoId ? produtosMock.find(p => p.id === novoItem.produtoId) : null
+
+  // Verifica se um item tem ordem de produção baseado na lista global de ordens
+  const itemTemOrdemProducao = (item: ItemPedidoExpandido) => {
+    return ordens.some(ordem => ordem.produtoId === item.produtoId)
+  }
 
   return (
     <Card>
@@ -357,7 +385,7 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
                     R$ {calcularSubtotal(item).toFixed(2)}
                   </TableCell>
                   <TableCell>
-                    {itensComOP.has(item.id!) ? (
+                    {itemTemOrdemProducao(item) ? (
                       <Badge className="bg-green-100 text-green-800">OP Gerada</Badge>
                     ) : (
                       <Badge variant="secondary">Sem OP</Badge>
@@ -365,7 +393,7 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-1">
-                      {!itensComOP.has(item.id!) ? (
+                      {!itemTemOrdemProducao(item) ? (
                         <Button
                           variant="ghost"
                           size="sm"
