@@ -56,8 +56,20 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
     return itensAtuais.reduce((total, item) => total + calcularSubtotal(item), 0)
   }
 
+  // Função para garantir integridade dos dados do produto
+  const garantirIntegridadeProduto = (produtoId: number) => {
+    const produto = produtosMock.find(p => p.id === produtoId)
+    if (!produto) {
+      console.error('Produto não encontrado para ID:', produtoId)
+      return null
+    }
+    // Sempre retornar uma cópia do produto para evitar mutação
+    return { ...produto }
+  }
+
   const adicionarItem = () => {
-    console.log('Tentando adicionar item:', novoItem)
+    console.log('=== ADICIONANDO NOVO ITEM ===')
+    console.log('Dados do novo item:', novoItem)
     
     if (!novoItem.produtoId || novoItem.produtoId === 0 || !novoItem.quantidade || novoItem.quantidade <= 0 || !novoItem.precoUnitario || novoItem.precoUnitario <= 0) {
       console.log('Validação falhou:', novoItem)
@@ -69,36 +81,39 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
       return
     }
 
-    const produto = produtosMock.find(p => p.id === novoItem.produtoId)
+    const produto = garantirIntegridadeProduto(novoItem.produtoId)
     if (!produto) {
-      console.log('Produto não encontrado:', novoItem.produtoId)
+      toast({
+        title: "Erro",
+        description: "Produto selecionado não é válido.",
+        variant: "destructive"
+      })
       return
     }
 
-    // Usar um ID sequencial único em vez de Date.now()
     const itemId = nextItemId++
 
     const itemCompleto: ItemPedidoExpandido = {
       id: itemId,
-      produtoId: novoItem.produtoId,
+      produtoId: produto.id, // GARANTIR que produtoId === produto.id
       quantidade: novoItem.quantidade || 1,
       precoUnitario: novoItem.precoUnitario || 0,
       desconto: novoItem.desconto || 0,
-      produto: { ...produto }, // Fazer uma cópia do produto para evitar referências
+      produto: produto, // Produto com integridade garantida
       subtotal: 0
     }
 
     itemCompleto.subtotal = calcularSubtotal(itemCompleto)
 
+    console.log('Item criado:', {
+      itemId: itemCompleto.id,
+      produtoId: itemCompleto.produtoId,
+      produtoNome: itemCompleto.produto.nome,
+      produtoIdInterno: itemCompleto.produto.id,
+      integridadeOK: itemCompleto.produtoId === itemCompleto.produto.id
+    })
+
     const novosItens = [...itens, itemCompleto]
-    console.log('Adicionando item com ID:', itemId, 'Produto:', produto.nome, 'ProdutoID:', produto.id)
-    console.log('Novos itens completos:', novosItens.map(i => ({ 
-      id: i.id, 
-      produtoId: i.produtoId, 
-      produto: i.produto?.nome,
-      produtoOriginalId: i.produto?.id 
-    })))
-    
     onItensChange(novosItens)
     onTotalChange(calcularTotal(novosItens))
 
@@ -119,7 +134,8 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
   }
 
   const removerItem = (id: number) => {
-    console.log('Removendo item:', id)
+    console.log('=== REMOVENDO ITEM ===')
+    console.log('ID do item a remover:', id)
     
     const item = itens.find(item => item.id === id)
     if (!item) return
@@ -142,19 +158,25 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
   }
 
   const atualizarItem = (id: number, campo: keyof ItemPedidoExpandido, valor: any) => {
-    console.log('Atualizando item:', id, campo, valor)
+    console.log('=== ATUALIZANDO ITEM ===')
+    console.log('Item ID:', id, 'Campo:', campo, 'Novo valor:', valor)
     
     const novosItens = itens.map(item => {
       if (item.id === id) {
         const itemAtualizado = { ...item, [campo]: valor }
         
-        // Se o produto foi alterado, atualizar a referência do produto
+        // Se o produto foi alterado, garantir integridade
         if (campo === 'produtoId') {
-          const produto = produtosMock.find(p => p.id === valor)
+          const produto = garantirIntegridadeProduto(valor)
           if (produto) {
-            itemAtualizado.produto = { ...produto }
+            itemAtualizado.produto = produto
             itemAtualizado.precoUnitario = produto.precoVenda
-            console.log('Produto alterado para:', produto.nome, 'ID:', produto.id)
+            console.log('Produto alterado com integridade:', {
+              produtoId: itemAtualizado.produtoId,
+              produtoNome: itemAtualizado.produto.nome,
+              produtoIdInterno: itemAtualizado.produto.id,
+              integridadeOK: itemAtualizado.produtoId === itemAtualizado.produto.id
+            })
           }
         }
         
@@ -278,23 +300,30 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
     return temOrdem
   }
 
-  // Função para obter o produto correto, priorizando os dados salvos
-  const obterProdutoCorreto = (item: ItemPedidoExpandido) => {
-    // SEMPRE usar o produto salvo no item se existir
+  // Função para validar e obter o produto correto com logs de depuração
+  const obterProdutoSeguro = (item: ItemPedidoExpandido) => {
+    console.log('=== VALIDANDO PRODUTO DO ITEM ===')
+    console.log('Item ID:', item.id)
+    console.log('produtoId:', item.produtoId)
+    console.log('produto salvo:', item.produto ? { id: item.produto.id, nome: item.produto.nome } : 'null')
+    
+    // Verificar integridade: produtoId deve ser igual ao produto.id
     if (item.produto && item.produto.id === item.produtoId) {
-      console.log('Usando produto salvo:', item.produto.nome, 'ID:', item.produto.id)
+      console.log('✅ INTEGRIDADE OK - Usando produto salvo')
       return item.produto
     }
     
-    // Fallback para o mock apenas se não houver produto salvo
-    const produtoMock = produtosMock.find(p => p.id === item.produtoId)
-    if (produtoMock) {
-      console.log('Fallback para mock:', produtoMock.nome, 'ID:', produtoMock.id)
-      return produtoMock
+    // Se não há integridade, buscar o produto correto
+    console.log('❌ FALTA DE INTEGRIDADE - Buscando produto correto')
+    const produtoCorreto = garantirIntegridadeProduto(item.produtoId)
+    
+    if (produtoCorreto) {
+      console.log('✅ Produto encontrado no mock:', produtoCorreto.nome)
+      return produtoCorreto
     }
     
-    // Se não encontrar nada, retornar dados básicos
-    console.warn('Produto não encontrado para ID:', item.produtoId)
+    // Último recurso
+    console.error('❌ PRODUTO NÃO ENCONTRADO - Usando dados básicos')
     return {
       id: item.produtoId,
       nome: `Produto ID ${item.produtoId}`,
@@ -303,13 +332,16 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
     }
   }
 
-  console.log('Estado atual - Itens:', itens.length, 'Ordens:', ordens.length)
-  console.log('Itens detalhados:', itens.map(i => ({ 
-    id: i.id, 
-    produtoId: i.produtoId, 
-    produto: i.produto?.nome,
-    produtoSalvoId: i.produto?.id 
-  })))
+  // Debug dos itens atuais
+  console.log('=== ESTADO ATUAL DOS ITENS ===')
+  itens.forEach(item => {
+    console.log(`Item ${item.id}:`, {
+      produtoId: item.produtoId,
+      produtoSalvo: item.produto ? item.produto.nome : 'null',
+      produtoSalvoId: item.produto ? item.produto.id : 'null',
+      integridade: item.produto ? item.produtoId === item.produto.id : false
+    })
+  })
 
   return (
     <Card>
@@ -431,17 +463,18 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
             </TableHeader>
             <TableBody>
               {itens.map((item) => {
-                // Usar a função que prioriza os dados salvos
-                const produtoCorreto = obterProdutoCorreto(item)
+                const produtoSeguro = obterProdutoSeguro(item)
                 
                 return (
                   <TableRow key={item.id}>
                     <TableCell>
                       <div>
-                        <div className="font-medium">{produtoCorreto.nome}</div>
-                        <div className="text-sm text-muted-foreground">{produtoCorreto.codigo}</div>
+                        <div className="font-medium">{produtoSeguro.nome}</div>
+                        <div className="text-sm text-muted-foreground">{produtoSeguro.codigo}</div>
                         <div className="text-xs text-gray-400">
-                          Item ID: {item.id} | Produto ID: {item.produtoId} | Salvo ID: {item.produto?.id || 'N/A'}
+                          Item: {item.id} | ProdutoID: {item.produtoId} | 
+                          Salvo: {item.produto?.id || 'N/A'} | 
+                          Válido: {item.produto?.id === item.produtoId ? '✅' : '❌'}
                         </div>
                       </div>
                     </TableCell>
