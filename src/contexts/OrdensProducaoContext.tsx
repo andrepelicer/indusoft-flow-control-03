@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, ReactNode } from 'react'
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 
 export interface OrdemProducao {
   id: number
@@ -31,8 +31,23 @@ export const useOrdensProducao = () => {
   return context
 }
 
+function carregarOrdensLocalStorage(): OrdemProducao[] {
+  const dados = localStorage.getItem('ordensProducao')
+  if (!dados) return []
+  try {
+    return JSON.parse(dados)
+  } catch {
+    return []
+  }
+}
+
 export const OrdensProducaoProvider = ({ children }: { children: ReactNode }) => {
-  const [ordens, setOrdens] = useState<OrdemProducao[]>([])
+  const [ordens, setOrdens] = useState<OrdemProducao[]>(() => carregarOrdensLocalStorage())
+
+  // Sempre que as ordens mudarem, salva no localStorage
+  useEffect(() => {
+    localStorage.setItem('ordensProducao', JSON.stringify(ordens))
+  }, [ordens])
 
   const adicionarOrdem = (ordemData: Omit<OrdemProducao, 'id'>): OrdemProducao => {
     const novaOrdem: OrdemProducao = {
