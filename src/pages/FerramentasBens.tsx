@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useState } from "react"
 import { Wrench } from "lucide-react"
+import { BemFerramentaEditModal } from "@/components/BemFerramentaEditModal"
 
 interface BemFerramenta {
   id: number
@@ -19,6 +20,10 @@ export default function FerramentasBens() {
   const [tipo, setTipo] = useState("")
   const [codigo, setCodigo] = useState("")
   const [status, setStatus] = useState("Disponível")
+
+  // Modal gestão
+  const [editOpen, setEditOpen] = useState(false)
+  const [selectedItem, setSelectedItem] = useState<BemFerramenta | null>(null)
 
   const cadastrar = (e: React.FormEvent) => {
     e.preventDefault()
@@ -36,6 +41,21 @@ export default function FerramentasBens() {
     setTipo("")
     setCodigo("")
     setStatus("Disponível")
+  }
+
+  const handleRemove = (id: number) => {
+    setItens(itens.filter(i => i.id !== id))
+  }
+
+  const handleEdit = (item: BemFerramenta) => {
+    setSelectedItem(item)
+    setEditOpen(true)
+  }
+
+  const handleSaveEdit = (edited: BemFerramenta) => {
+    setItens(prev =>
+      prev.map(i => (i.id === edited.id ? edited : i))
+    )
   }
 
   return (
@@ -79,9 +99,10 @@ export default function FerramentasBens() {
           </form>
         </CardContent>
       </Card>
+      
       <Card>
         <CardHeader>
-          <CardTitle>Ferramentas/Bens Cadastrados</CardTitle>
+          <CardTitle>Gerenciamento de Ferramentas/Bens</CardTitle>
         </CardHeader>
         <CardContent>
           <ul className="space-y-2">
@@ -89,13 +110,31 @@ export default function FerramentasBens() {
               <li className="text-muted-foreground text-sm">Nenhum item cadastrado ainda.</li>
             )}
             {itens.map(i => (
-              <li key={i.id} className="border px-3 py-2 rounded">
-                <strong>{i.nome}</strong> • {i.tipo} • {i.codigo} • {i.status}
+              <li key={i.id} className="border px-3 py-2 rounded flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <strong>{i.nome}</strong> • {i.tipo} • {i.codigo} • {i.status}
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={() => handleEdit(i)}>
+                    Editar
+                  </Button>
+                  <Button variant="destructive" size="sm" onClick={() => handleRemove(i.id)}>
+                    Remover
+                  </Button>
+                </div>
               </li>
             ))}
           </ul>
         </CardContent>
       </Card>
+      
+      {/* Modal de edição */}
+      <BemFerramentaEditModal
+        open={editOpen}
+        item={selectedItem}
+        onClose={() => setEditOpen(false)}
+        onSave={handleSaveEdit}
+      />
     </div>
   )
 }
