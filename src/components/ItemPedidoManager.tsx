@@ -91,8 +91,13 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
     itemCompleto.subtotal = calcularSubtotal(itemCompleto)
 
     const novosItens = [...itens, itemCompleto]
-    console.log('Adicionando item com ID:', itemId, 'Produto:', produto.nome)
-    console.log('Novos itens completos:', novosItens.map(i => ({ id: i.id, produtoId: i.produtoId, produto: i.produto?.nome })))
+    console.log('Adicionando item com ID:', itemId, 'Produto:', produto.nome, 'ProdutoID:', produto.id)
+    console.log('Novos itens completos:', novosItens.map(i => ({ 
+      id: i.id, 
+      produtoId: i.produtoId, 
+      produto: i.produto?.nome,
+      produtoOriginalId: i.produto?.id 
+    })))
     
     onItensChange(novosItens)
     onTotalChange(calcularTotal(novosItens))
@@ -149,6 +154,7 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
           if (produto) {
             itemAtualizado.produto = { ...produto }
             itemAtualizado.precoUnitario = produto.precoVenda
+            console.log('Produto alterado para:', produto.nome, 'ID:', produto.id)
           }
         }
         
@@ -272,8 +278,38 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
     return temOrdem
   }
 
+  // Função para obter o produto correto, priorizando os dados salvos
+  const obterProdutoCorreto = (item: ItemPedidoExpandido) => {
+    // SEMPRE usar o produto salvo no item se existir
+    if (item.produto && item.produto.id === item.produtoId) {
+      console.log('Usando produto salvo:', item.produto.nome, 'ID:', item.produto.id)
+      return item.produto
+    }
+    
+    // Fallback para o mock apenas se não houver produto salvo
+    const produtoMock = produtosMock.find(p => p.id === item.produtoId)
+    if (produtoMock) {
+      console.log('Fallback para mock:', produtoMock.nome, 'ID:', produtoMock.id)
+      return produtoMock
+    }
+    
+    // Se não encontrar nada, retornar dados básicos
+    console.warn('Produto não encontrado para ID:', item.produtoId)
+    return {
+      id: item.produtoId,
+      nome: `Produto ID ${item.produtoId}`,
+      codigo: 'N/A',
+      precoVenda: item.precoUnitario
+    }
+  }
+
   console.log('Estado atual - Itens:', itens.length, 'Ordens:', ordens.length)
-  console.log('Itens detalhados:', itens.map(i => ({ id: i.id, produtoId: i.produtoId, produto: i.produto?.nome })))
+  console.log('Itens detalhados:', itens.map(i => ({ 
+    id: i.id, 
+    produtoId: i.produtoId, 
+    produto: i.produto?.nome,
+    produtoSalvoId: i.produto?.id 
+  })))
 
   return (
     <Card>
@@ -395,16 +431,18 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
             </TableHeader>
             <TableBody>
               {itens.map((item) => {
-                // Garantir que o produto está correto baseado no produtoId
-                const produtoCorreto = produtosMock.find(p => p.id === item.produtoId) || item.produto
+                // Usar a função que prioriza os dados salvos
+                const produtoCorreto = obterProdutoCorreto(item)
                 
                 return (
                   <TableRow key={item.id}>
                     <TableCell>
                       <div>
-                        <div className="font-medium">{produtoCorreto?.nome || 'Produto não encontrado'}</div>
-                        <div className="text-sm text-muted-foreground">{produtoCorreto?.codigo || 'N/A'}</div>
-                        <div className="text-xs text-gray-400">ID Item: {item.id} | ID Produto: {item.produtoId}</div>
+                        <div className="font-medium">{produtoCorreto.nome}</div>
+                        <div className="text-sm text-muted-foreground">{produtoCorreto.codigo}</div>
+                        <div className="text-xs text-gray-400">
+                          Item ID: {item.id} | Produto ID: {item.produtoId} | Salvo ID: {item.produto?.id || 'N/A'}
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>
