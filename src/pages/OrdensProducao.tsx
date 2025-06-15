@@ -35,7 +35,8 @@ interface ProdutoOrdem {
   etapas: EtapaProducao[]
 }
 
-interface OrdemProducaoCompleta extends Omit<OrdemProducao, 'status'> {
+interface OrdemProducaoCompleta extends Omit<OrdemProducao, 'status' | 'produtoId' | 'produto' | 'codigo' | 'quantidade' | 'dataCriacao' | 'dataPrevisao'> {
+  descricao: string
   dataInicio: string
   dataPrevisao: string
   dataFinalizacao?: string
@@ -95,11 +96,12 @@ export default function OrdensProducao() {
       descricao: ordem.observacoes || "Ordem de produção",
       dataInicio: ordem.dataCriacao,
       dataPrevisao: ordem.dataPrevisao,
+      dataFinalizacao: undefined,
       status: ordem.status === 'Pendente' ? 'Planejada' : 
               ordem.status === 'Em Andamento' ? 'Em Andamento' :
               ordem.status === 'Concluído' ? 'Finalizada' :
               ordem.status === 'Cancelado' ? 'Cancelada' : 'Planejada',
-      prioridade: 'Normal' as const,
+      prioridade: 'Normal',
       responsavelGeral: "Responsável Padrão",
       observacoes: ordem.observacoes,
       produtos: [{
@@ -110,7 +112,7 @@ export default function OrdensProducao() {
         quantidadeProduzida: 0,
         dataInicioProduto: ordem.dataCriacao,
         dataPrevisaoProduto: ordem.dataPrevisao,
-        status: 'Pendente' as const,
+        status: 'Pendente',
         etapas: []
       }]
     }))
@@ -221,7 +223,7 @@ export default function OrdensProducao() {
         quantidade: selectedOrdem.produtos[0]?.quantidade || 0,
         status: selectedOrdem.status === 'Planejada' ? 'Pendente' :
                 selectedOrdem.status === 'Em Andamento' ? 'Em Andamento' :
-                selectedOrdem.status === 'Finalizada' ? 'Concluído' :
+                selectedOrdem.status === 'Concluído' ? 'Concluído' :
                 selectedOrdem.status === 'Cancelada' ? 'Cancelado' : 'Pendente',
         dataCriacao: selectedOrdem.dataInicio,
         dataPrevisao: selectedOrdem.dataPrevisao,
