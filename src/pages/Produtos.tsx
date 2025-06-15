@@ -1,11 +1,10 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Package, Plus, Search, Edit, Trash2, Eye, AlertTriangle } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { ProdutoForm } from "@/components/ProdutoForm"
 import { type Produto } from "@/lib/validations"
 import { useToast } from "@/hooks/use-toast"
@@ -22,6 +21,61 @@ import {
 
 type ProdutoComId = Produto & { id: number }
 
+const PRODUTOS_INICIAIS: ProdutoComId[] = [
+  { 
+    id: 1, 
+    codigo: "PRD-001", 
+    nome: "Chapa de Aço Galvanizado 2mm", 
+    categoria: "Matéria-Prima",
+    unidade: "M²",
+    precoVenda: 85.50,
+    custoProducao: 65.20,
+    estoque: 150,
+    estoqueMinimo: 50,
+    status: "Ativo" as const,
+    temFichaTecnica: true
+  },
+  { 
+    id: 2, 
+    codigo: "PRD-002", 
+    nome: "Parafuso Allen M8x40", 
+    categoria: "Componentes",
+    unidade: "UN",
+    precoVenda: 2.50,
+    custoProducao: 1.20,
+    estoque: 5000,
+    estoqueMinimo: 1000,
+    status: "Ativo" as const,
+    temFichaTecnica: false
+  },
+  { 
+    id: 3, 
+    codigo: "PRD-003", 
+    nome: "Estrutura Metálica Personalizada", 
+    categoria: "Produto Final",
+    unidade: "UN",
+    precoVenda: 1250.00,
+    custoProducao: 890.00,
+    estoque: 8,
+    estoqueMinimo: 5,
+    status: "Ativo" as const,
+    temFichaTecnica: true
+  },
+  { 
+    id: 4, 
+    codigo: "PRD-004", 
+    nome: "Tinta Anticorrosiva", 
+    categoria: "Acabamento",
+    unidade: "L",
+    precoVenda: 45.00,
+    custoProducao: 32.00,
+    estoque: 2,
+    estoqueMinimo: 10,
+    status: "Ativo" as const,
+    temFichaTecnica: false
+  },
+]
+
 const Produtos = () => {
   const [searchTerm, setSearchTerm] = useState("")
   const [formOpen, setFormOpen] = useState(false)
@@ -30,60 +84,31 @@ const Produtos = () => {
   const [produtoToDelete, setProdutoToDelete] = useState<number | null>(null)
   const { toast } = useToast()
   
-  const [produtos, setProdutos] = useState<ProdutoComId[]>([
-    { 
-      id: 1, 
-      codigo: "PRD-001", 
-      nome: "Chapa de Aço Galvanizado 2mm", 
-      categoria: "Matéria-Prima",
-      unidade: "M²",
-      precoVenda: 85.50,
-      custoProducao: 65.20,
-      estoque: 150,
-      estoqueMinimo: 50,
-      status: "Ativo" as const,
-      temFichaTecnica: true
-    },
-    { 
-      id: 2, 
-      codigo: "PRD-002", 
-      nome: "Parafuso Allen M8x40", 
-      categoria: "Componentes",
-      unidade: "UN",
-      precoVenda: 2.50,
-      custoProducao: 1.20,
-      estoque: 5000,
-      estoqueMinimo: 1000,
-      status: "Ativo" as const,
-      temFichaTecnica: false
-    },
-    { 
-      id: 3, 
-      codigo: "PRD-003", 
-      nome: "Estrutura Metálica Personalizada", 
-      categoria: "Produto Final",
-      unidade: "UN",
-      precoVenda: 1250.00,
-      custoProducao: 890.00,
-      estoque: 8,
-      estoqueMinimo: 5,
-      status: "Ativo" as const,
-      temFichaTecnica: true
-    },
-    { 
-      id: 4, 
-      codigo: "PRD-004", 
-      nome: "Tinta Anticorrosiva", 
-      categoria: "Acabamento",
-      unidade: "L",
-      precoVenda: 45.00,
-      custoProducao: 32.00,
-      estoque: 2,
-      estoqueMinimo: 10,
-      status: "Ativo" as const,
-      temFichaTecnica: false
-    },
-  ])
+  const [produtos, setProdutos] = useState<ProdutoComId[]>([])
+
+  // Carregar produtos do localStorage ou usar dados iniciais
+  useEffect(() => {
+    const produtosSalvos = localStorage.getItem('produtos')
+    if (produtosSalvos) {
+      try {
+        setProdutos(JSON.parse(produtosSalvos))
+      } catch (error) {
+        console.error('Erro ao carregar produtos do localStorage:', error)
+        setProdutos(PRODUTOS_INICIAIS)
+        localStorage.setItem('produtos', JSON.stringify(PRODUTOS_INICIAIS))
+      }
+    } else {
+      setProdutos(PRODUTOS_INICIAIS)
+      localStorage.setItem('produtos', JSON.stringify(PRODUTOS_INICIAIS))
+    }
+  }, [])
+
+  // Salvar produtos no localStorage sempre que a lista for atualizada
+  useEffect(() => {
+    if (produtos.length > 0) {
+      localStorage.setItem('produtos', JSON.stringify(produtos))
+    }
+  }, [produtos])
 
   const filteredProdutos = produtos.filter(produto =>
     produto.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -100,7 +125,7 @@ const Produtos = () => {
         p.id === editingProduto.id ? { ...produtoData, id: editingProduto.id } as ProdutoComId : p
       ))
     } else {
-      const newId = Math.max(...produtos.map(p => p.id)) + 1
+      const newId = produtos.length > 0 ? Math.max(...produtos.map(p => p.id)) + 1 : 1
       setProdutos(prev => [...prev, { ...produtoData, id: newId } as ProdutoComId])
     }
     setEditingProduto(undefined)
