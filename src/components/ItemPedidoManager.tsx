@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -17,20 +16,6 @@ interface ItemPedidoManagerProps {
   onTotalChange: (total: number) => void
 }
 
-// Mock de produtos centralizado - ÚNICA FONTE DA VERDADE
-const PRODUTOS_DATABASE = [
-  { id: 1, nome: "Chapa de Aço 1mm", codigo: "CH001", precoVenda: 120.00 },
-  { id: 2, nome: "Perfil L 50x50x3", codigo: "PF002", precoVenda: 45.50 },
-  { id: 3, nome: "Tubo Redondo 2\"", codigo: "TR003", precoVenda: 89.90 },
-  { id: 4, nome: "Solda Eletrodo 3,25mm", codigo: "SO004", precoVenda: 25.80 },
-  { id: 5, nome: "Tinta Anticorrosiva", codigo: "TI005", precoVenda: 67.30 },
-  { id: 6, nome: "Parafuso M8x25", codigo: "PA006", precoVenda: 1.20 },
-  { id: 7, nome: "Porca M8", codigo: "PO007", precoVenda: 0.80 },
-  { id: 8, nome: "Arruela Lisa M8", codigo: "AR008", precoVenda: 0.25 },
-  { id: 9, nome: "Chapa Galvanizada 2mm", codigo: "CG009", precoVenda: 180.00 },
-  { id: 10, nome: "Barra Redonda 12mm", codigo: "BR010", precoVenda: 35.60 }
-] as const
-
 // Gerador de ID único para itens do pedido
 let nextItemId = Date.now()
 
@@ -46,9 +31,47 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
   const [searchTerm, setSearchTerm] = useState("")
   const [showDropdown, setShowDropdown] = useState(false)
 
+  // Função para carregar produtos do localStorage (mesma fonte da página de produtos)
+  const carregarProdutos = () => {
+    try {
+      const produtosSalvos = localStorage.getItem('produtos')
+      if (produtosSalvos) {
+        const produtos = JSON.parse(produtosSalvos)
+        // Converter para o formato esperado pelo ItemPedidoManager
+        return produtos
+          .filter((p: any) => p.status === 'Ativo') // Apenas produtos ativos
+          .map((p: any) => ({
+            id: p.id,
+            nome: p.nome,
+            codigo: p.codigo,
+            precoVenda: p.precoVenda
+          }))
+      }
+    } catch (error) {
+      console.error('Erro ao carregar produtos:', error)
+    }
+    
+    // Fallback para produtos mock se não houver produtos cadastrados
+    return [
+      { id: 1, nome: "Chapa de Aço 1mm", codigo: "CH001", precoVenda: 120.00 },
+      { id: 2, nome: "Perfil L 50x50x3", codigo: "PF002", precoVenda: 45.50 },
+      { id: 3, nome: "Tubo Redondo 2\"", codigo: "TR003", precoVenda: 89.90 },
+      { id: 4, nome: "Solda Eletrodo 3,25mm", codigo: "SO004", precoVenda: 25.80 },
+      { id: 5, nome: "Tinta Anticorrosiva", codigo: "TI005", precoVenda: 67.30 },
+      { id: 6, nome: "Parafuso M8x25", codigo: "PA006", precoVenda: 1.20 },
+      { id: 7, nome: "Porca M8", codigo: "PO007", precoVenda: 0.80 },
+      { id: 8, nome: "Arruela Lisa M8", codigo: "AR008", precoVenda: 0.25 },
+      { id: 9, nome: "Chapa Galvanizada 2mm", codigo: "CG009", precoVenda: 180.00 },
+      { id: 10, nome: "Barra Redonda 12mm", codigo: "BR010", precoVenda: 35.60 }
+    ]
+  }
+
+  // Carregar produtos uma vez e memoizar
+  const produtos = carregarProdutos()
+
   // Função para buscar produto com garantia de dados corretos
   const buscarProdutoPorId = (produtoId: number) => {
-    const produto = PRODUTOS_DATABASE.find(p => p.id === produtoId)
+    const produto = produtos.find(p => p.id === produtoId)
     if (!produto) {
       console.error(`❌ Produto ID ${produtoId} não encontrado no banco de dados`)
       return null
@@ -192,7 +215,7 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
     onTotalChange(calcularTotal(novosItens))
   }
 
-  const selecionarProduto = (produto: typeof PRODUTOS_DATABASE[number]) => {
+  const selecionarProduto = (produto: any) => {
     console.log('✅ Produto selecionado:', produto.nome)
     setNovoItem({
       ...novoItem,
@@ -289,13 +312,6 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
     }
   }
 
-  const produtosFiltrados = PRODUTOS_DATABASE.filter(produto =>
-    produto.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    produto.codigo.toLowerCase().includes(searchTerm.toLowerCase())
-  )
-
-  const produtoSelecionado = novoItem.produtoId ? PRODUTOS_DATABASE.find(p => p.id === novoItem.produtoId) : null
-
   // Verifica se um item tem ordem de produção
   const itemTemOrdemProducao = (item: ItemPedidoExpandido) => {
     return ordens.some(ordem => ordem.produtoId === item.produtoId)
@@ -326,6 +342,13 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
       precoVenda: item.precoUnitario || 0
     }
   }
+
+  const produtosFiltrados = produtos.filter(produto =>
+    produto.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    produto.codigo.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  const produtoSelecionado = novoItem.produtoId ? produtos.find(p => p.id === novoItem.produtoId) : null
 
   return (
     <Card>
@@ -376,7 +399,10 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
                   ))
                 ) : (
                   <div className="p-3 text-gray-500 text-center">
-                    Nenhum produto encontrado
+                    {produtos.length === 0 ? 
+                      "Nenhum produto cadastrado. Cadastre produtos primeiro." : 
+                      "Nenhum produto encontrado"
+                    }
                   </div>
                 )}
               </div>
