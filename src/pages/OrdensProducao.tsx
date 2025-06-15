@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -46,6 +46,20 @@ interface OrdemProducao {
   responsavelGeral: string
   observacoes?: string
   produtos: ProdutoOrdem[]
+}
+
+type ProdutoComId = {
+  id: number
+  codigo: string
+  nome: string
+  categoria: string
+  unidade: string
+  precoVenda: number
+  custoProducao: number
+  estoque: number
+  estoqueMinimo: number
+  status: 'Ativo' | 'Inativo'
+  temFichaTecnica: boolean
 }
 
 const etapasDisponiveis = [
@@ -117,12 +131,25 @@ export default function OrdensProducao() {
     }
   ])
 
-  const [produtos] = useState([
-    { id: 1, codigo: "AI304-001", nome: "Peça de Aço Inox 304" },
-    { id: 2, codigo: "AL2-002", nome: "Chapa de Alumínio 2mm" },
-    { id: 3, codigo: "FG-003", nome: "Tubo de Ferro Galvanizado" },
-    { id: 4, codigo: "AC-004", nome: "Perfil de Aço Carbono" }
-  ])
+  const [produtos, setProdutos] = useState<ProdutoComId[]>([])
+
+  // Carregar produtos do localStorage
+  useEffect(() => {
+    const produtosSalvos = localStorage.getItem('produtos')
+    if (produtosSalvos) {
+      try {
+        const produtosData = JSON.parse(produtosSalvos)
+        // Filtrar apenas produtos ativos
+        const produtosAtivos = produtosData.filter((produto: ProdutoComId) => produto.status === 'Ativo')
+        setProdutos(produtosAtivos)
+      } catch (error) {
+        console.error('Erro ao carregar produtos do localStorage:', error)
+        setProdutos([])
+      }
+    } else {
+      setProdutos([])
+    }
+  }, [])
 
   const [responsaveis] = useState([
     "João Silva",
