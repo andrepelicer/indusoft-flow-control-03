@@ -1,3 +1,4 @@
+
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -29,6 +30,9 @@ const produtosMock = [
   { id: 9, nome: "Chapa Galvanizada 2mm", codigo: "CG009", precoVenda: 180.00 },
   { id: 10, nome: "Barra Redonda 12mm", codigo: "BR010", precoVenda: 35.60 }
 ]
+
+// Gerador de ID único para itens do pedido
+let nextItemId = 1000
 
 export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemPedidoManagerProps) {
   const { toast } = useToast()
@@ -71,20 +75,24 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
       return
     }
 
+    // Usar um ID sequencial único em vez de Date.now()
+    const itemId = nextItemId++
+
     const itemCompleto: ItemPedidoExpandido = {
-      id: Date.now(),
+      id: itemId,
       produtoId: novoItem.produtoId,
       quantidade: novoItem.quantidade || 1,
       precoUnitario: novoItem.precoUnitario || 0,
       desconto: novoItem.desconto || 0,
-      produto,
+      produto: { ...produto }, // Fazer uma cópia do produto para evitar referências
       subtotal: 0
     }
 
     itemCompleto.subtotal = calcularSubtotal(itemCompleto)
 
     const novosItens = [...itens, itemCompleto]
-    console.log('Adicionando item, novos itens:', novosItens)
+    console.log('Adicionando item com ID:', itemId, 'Produto:', produto.nome)
+    console.log('Novos itens completos:', novosItens.map(i => ({ id: i.id, produtoId: i.produtoId, produto: i.produto?.nome })))
     
     onItensChange(novosItens)
     onTotalChange(calcularTotal(novosItens))
@@ -134,6 +142,16 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
     const novosItens = itens.map(item => {
       if (item.id === id) {
         const itemAtualizado = { ...item, [campo]: valor }
+        
+        // Se o produto foi alterado, atualizar a referência do produto
+        if (campo === 'produtoId') {
+          const produto = produtosMock.find(p => p.id === valor)
+          if (produto) {
+            itemAtualizado.produto = { ...produto }
+            itemAtualizado.precoUnitario = produto.precoVenda
+          }
+        }
+        
         itemAtualizado.subtotal = calcularSubtotal(itemAtualizado)
         return itemAtualizado
       }
@@ -198,7 +216,7 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
         quantidade: item.quantidade,
         status: 'Pendente',
         dataCriacao: new Date().toISOString().split('T')[0],
-        dataPrevisao: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 7 dias a partir de hoje
+        dataPrevisao: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         observacoes: `Ordem gerada automaticamente do pedido de venda para ${item.produto.nome}`
       })
       
@@ -251,11 +269,11 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
   // Verifica se um item tem ordem de produção baseado na lista global de ordens
   const itemTemOrdemProducao = (item: ItemPedidoExpandido) => {
     const temOrdem = ordens.some(ordem => ordem.produtoId === item.produtoId)
-    console.log(`Item ${item.produto?.nome} tem ordem:`, temOrdem)
     return temOrdem
   }
 
   console.log('Estado atual - Itens:', itens.length, 'Ordens:', ordens.length)
+  console.log('Itens detalhados:', itens.map(i => ({ id: i.id, produtoId: i.produtoId, produto: i.produto?.nome })))
 
   return (
     <Card>
@@ -376,88 +394,94 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
               </TableRow>
             </TableHeader>
             <TableBody>
-              {itens.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>
-                    <div>
-                      <div className="font-medium">{item.produto?.nome}</div>
-                      <div className="text-sm text-muted-foreground">{item.produto?.codigo}</div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      type="number"
-                      min="1"
-                      value={item.quantidade}
-                      onChange={(e) => atualizarItem(item.id!, 'quantidade', Number(e.target.value))}
-                      className="w-20"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={item.precoUnitario}
-                      onChange={(e) => atualizarItem(item.id!, 'precoUnitario', Number(e.target.value))}
-                      className="w-24"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      max="100"
-                      value={item.desconto || 0}
-                      onChange={(e) => atualizarItem(item.id!, 'desconto', Number(e.target.value))}
-                      className="w-20"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    R$ {calcularSubtotal(item).toFixed(2)}
-                  </TableCell>
-                  <TableCell>
-                    {itemTemOrdemProducao(item) ? (
-                      <Badge className="bg-green-100 text-green-800">OP Gerada</Badge>
-                    ) : (
-                      <Badge variant="secondary">Sem OP</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      {!itemTemOrdemProducao(item) ? (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          title="Gerar Ordem de Produção"
-                          onClick={() => gerarOrdemProducao(item)}
-                        >
-                          <Settings className="h-4 w-4" />
-                        </Button>
+              {itens.map((item) => {
+                // Garantir que o produto está correto baseado no produtoId
+                const produtoCorreto = produtosMock.find(p => p.id === item.produtoId) || item.produto
+                
+                return (
+                  <TableRow key={item.id}>
+                    <TableCell>
+                      <div>
+                        <div className="font-medium">{produtoCorreto?.nome || 'Produto não encontrado'}</div>
+                        <div className="text-sm text-muted-foreground">{produtoCorreto?.codigo || 'N/A'}</div>
+                        <div className="text-xs text-gray-400">ID Item: {item.id} | ID Produto: {item.produtoId}</div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={item.quantidade}
+                        onChange={(e) => atualizarItem(item.id!, 'quantidade', Number(e.target.value))}
+                        className="w-20"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={item.precoUnitario}
+                        onChange={(e) => atualizarItem(item.id!, 'precoUnitario', Number(e.target.value))}
+                        className="w-24"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="100"
+                        value={item.desconto || 0}
+                        onChange={(e) => atualizarItem(item.id!, 'desconto', Number(e.target.value))}
+                        className="w-20"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      R$ {calcularSubtotal(item).toFixed(2)}
+                    </TableCell>
+                    <TableCell>
+                      {itemTemOrdemProducao(item) ? (
+                        <Badge className="bg-green-100 text-green-800">OP Gerada</Badge>
                       ) : (
+                        <Badge variant="secondary">Sem OP</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        {!itemTemOrdemProducao(item) ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            title="Gerar Ordem de Produção"
+                            onClick={() => gerarOrdemProducao(item)}
+                          >
+                            <Settings className="h-4 w-4" />
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            title="Cancelar Ordem de Produção"
+                            onClick={() => cancelarOrdemProducao(item)}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="sm"
-                          title="Cancelar Ordem de Produção"
-                          onClick={() => cancelarOrdemProducao(item)}
-                          className="text-red-600 hover:text-red-700"
+                          title="Remover"
+                          onClick={() => removerItem(item.id!)}
                         >
-                          <X className="h-4 w-4" />
+                          <Trash2 className="h-4 w-4" />
                         </Button>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        title="Remover"
-                        onClick={() => removerItem(item.id!)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
               <TableRow className="bg-muted/50">
                 <TableCell colSpan={5} className="font-semibold">Total Geral:</TableCell>
                 <TableCell className="font-bold">R$ {calcularTotal(itens).toFixed(2)}</TableCell>

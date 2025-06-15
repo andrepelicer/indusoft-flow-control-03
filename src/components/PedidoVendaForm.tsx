@@ -61,21 +61,54 @@ export function PedidoVendaForm({ open, onOpenChange, pedido, onSave }: PedidoVe
   useEffect(() => {
     if (open) {
       if (pedido) {
-        console.log('Carregando pedido para edição:', pedido.numero, 'com', pedido.itens?.length || 0, 'itens')
-        console.log('Detalhes dos itens:', pedido.itens)
+        console.log('=== CARREGANDO PEDIDO PARA EDIÇÃO ===')
+        console.log('Pedido:', pedido.numero)
+        console.log('Itens originais:', pedido.itens?.map(i => ({ 
+          id: i.id, 
+          produtoId: i.produtoId, 
+          produto: i.produto?.nome,
+          quantidade: i.quantidade 
+        })))
+        
         isEditingRef.current = true
         form.reset(pedido)
-        // Preservar os itens do pedido - fazer uma cópia profunda
+        
+        // Preservar os itens do pedido com validação
         if (pedido.itens && pedido.itens.length > 0) {
-          const itensCopiados = pedido.itens.map(item => ({ ...item }))
-          setItens(itensCopiados)
-          console.log('Itens carregados no formulário:', itensCopiados.length)
+          // Criar uma cópia profunda e garantir integridade dos dados
+          const itensValidados = pedido.itens.map(item => {
+            const itemCopia = {
+              ...item,
+              id: item.id || Date.now() + Math.random(), // Garantir ID único
+              produtoId: item.produtoId,
+              quantidade: item.quantidade,
+              precoUnitario: item.precoUnitario,
+              desconto: item.desconto || 0,
+              produto: item.produto ? { ...item.produto } : undefined,
+              subtotal: item.subtotal || (item.quantidade * item.precoUnitario * (1 - (item.desconto || 0) / 100))
+            }
+            console.log('Item validado:', {
+              id: itemCopia.id,
+              produtoId: itemCopia.produtoId,
+              produto: itemCopia.produto?.nome,
+              quantidade: itemCopia.quantidade
+            })
+            return itemCopia
+          })
+          
+          setItens(itensValidados)
+          console.log('Itens carregados no formulário:', itensValidados.length)
+          console.log('Detalhes dos itens carregados:', itensValidados.map(i => ({ 
+            id: i.id, 
+            produtoId: i.produtoId, 
+            produto: i.produto?.nome 
+          })))
         } else {
           setItens([])
           console.log('Nenhum item encontrado no pedido')
         }
       } else {
-        console.log('Criando novo pedido')
+        console.log('=== CRIANDO NOVO PEDIDO ===')
         isEditingRef.current = false
         form.reset({
           numero: `PV-${Date.now()}`,
@@ -94,9 +127,22 @@ export function PedidoVendaForm({ open, onOpenChange, pedido, onSave }: PedidoVe
   }, [pedido, form, open])
 
   const handleItensChange = useCallback((novosItens: ItemPedidoExpandido[]) => {
-    console.log('Atualizando itens do pedido:', novosItens.length, 'itens')
-    console.log('Novos itens detalhes:', novosItens.map(i => ({ id: i.id, produto: i.produto?.nome, quantidade: i.quantidade })))
-    setItens(novosItens)
+    console.log('=== ALTERAÇÃO DE ITENS ===')
+    console.log('Novos itens recebidos:', novosItens.length)
+    console.log('Detalhes dos novos itens:', novosItens.map(i => ({ 
+      id: i.id, 
+      produtoId: i.produtoId, 
+      produto: i.produto?.nome,
+      quantidade: i.quantidade 
+    })))
+    
+    // Criar uma cópia profunda para evitar mutações
+    const itensCopiados = novosItens.map(item => ({
+      ...item,
+      produto: item.produto ? { ...item.produto } : undefined
+    }))
+    
+    setItens(itensCopiados)
   }, [])
 
   const handleTotalChange = useCallback((novoTotal: number) => {
@@ -114,11 +160,14 @@ export function PedidoVendaForm({ open, onOpenChange, pedido, onSave }: PedidoVe
   }, [itens, form])
 
   const onSubmit = (data: Pedido) => {
-    console.log('Submetendo pedido:', { 
-      ...data, 
-      totalItens: itens.length,
-      itensDetalhes: itens.map(i => ({ id: i.id, produto: i.produto?.nome, quantidade: i.quantidade }))
-    })
+    console.log('=== SUBMETENDO PEDIDO ===')
+    console.log('Dados do formulário:', { ...data, totalItens: itens.length })
+    console.log('Itens a serem salvos:', itens.map(i => ({ 
+      id: i.id, 
+      produtoId: i.produtoId, 
+      produto: i.produto?.nome,
+      quantidade: i.quantidade 
+    })))
     
     if (itens.length === 0) {
       toast({
@@ -129,17 +178,32 @@ export function PedidoVendaForm({ open, onOpenChange, pedido, onSave }: PedidoVe
       return
     }
 
-    // Garantir que os itens estão incluídos no pedido - fazer cópia profunda
+    // Garantir que os itens estão incluídos no pedido com validação final
+    const itensFinais = itens.map(item => ({
+      ...item,
+      id: item.id || Date.now() + Math.random(),
+      produtoId: item.produtoId,
+      quantidade: item.quantidade,
+      precoUnitario: item.precoUnitario,
+      desconto: item.desconto || 0,
+      produto: item.produto ? { ...item.produto } : undefined,
+      subtotal: item.subtotal || (item.quantidade * item.precoUnitario * (1 - (item.desconto || 0) / 100))
+    }))
+    
     const pedidoComItens = { 
       ...data, 
-      itens: itens.map(item => ({ ...item })) // Criar uma nova array com cópias dos itens
+      itens: itensFinais
     }
     
-    console.log('Salvando pedido final:', {
-      ...pedidoComItens,
-      totalItens: pedidoComItens.itens.length,
-      itensDetalhes: pedidoComItens.itens.map(i => ({ id: i.id, produto: i.produto?.nome, quantidade: i.quantidade }))
-    })
+    console.log('=== PEDIDO FINAL PARA SALVAR ===')
+    console.log('Total de itens:', pedidoComItens.itens.length)
+    console.log('Itens finais:', pedidoComItens.itens.map(i => ({ 
+      id: i.id, 
+      produtoId: i.produtoId, 
+      produto: i.produto?.nome,
+      quantidade: i.quantidade 
+    })))
+    
     onSave(pedidoComItens)
     
     toast({
