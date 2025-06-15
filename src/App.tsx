@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
 import Index from "./pages/Index"
 import Login from "./pages/Login"
@@ -21,6 +20,8 @@ import Usuarios from "./pages/Usuarios"
 import Empresa from "./pages/Empresa"
 import OrdensProducao from "./pages/OrdensProducao"
 import EtapasProducao from "./pages/EtapasProducao"
+import Transportadoras from "./pages/Transportadoras"
+import FerramentasBens from "./pages/FerramentasBens"
 import { Layout } from "./components/Layout"
 import { OrdensProducaoProvider } from "./contexts/OrdensProducaoContext"
 import NotFound from "./pages/NotFound"
@@ -52,6 +53,8 @@ function App() {
           <Route path="/empresa" element={<Layout><Empresa /></Layout>} />
           <Route path="/ordens-producao" element={<Layout><OrdensProducao /></Layout>} />
           <Route path="/etapas-producao" element={<Layout><EtapasProducao /></Layout>} />
+          <Route path="/transportadoras" element={<Layout><Transportadoras /></Layout>} />
+          <Route path="/ferramentas-bens" element={<Layout><FerramentasBens /></Layout>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>

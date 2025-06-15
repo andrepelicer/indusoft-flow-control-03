@@ -1,4 +1,3 @@
-
 import {
   Sidebar,
   SidebarContent,
@@ -11,7 +10,7 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar"
-import { Building2, Users, Package, ShoppingCart, CreditCard, Factory, BarChart3, Settings } from "lucide-react"
+import { Building2, Users, Package, ShoppingCart, CreditCard, Factory, BarChart3, Settings, Briefcase, Wrench } from "lucide-react"
 import { Link } from "react-router-dom"
 
 const menuItems = [
@@ -31,6 +30,8 @@ const menuItems = [
       { title: "Produtos", url: "/produtos" },
       { title: "Vendedores", url: "/vendedores" },
       { title: "Meios de Pagamento", url: "/meios-pagamento" },
+      { title: "Transportadoras", url: "/transportadoras", icon: Briefcase },
+      { title: "Ferramentas e Bens", url: "/ferramentas-bens", icon: Wrench },
     ]
   },
   {
