@@ -21,16 +21,16 @@ export function Layout({ children }: LayoutProps) {
         <AppSidebar />
         <SidebarInset className="flex-1">
           <div className="flex h-full w-full flex-col">
-            <header className="flex h-14 md:h-16 shrink-0 items-center gap-2 border-b px-3 md:px-6">
-              <SidebarTrigger className="md:hidden" />
+            <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
+              <SidebarTrigger />
               <div className="ml-auto flex items-center space-x-4">
-                <span className="text-xs md:text-sm text-muted-foreground hidden sm:inline">
+                <span className="text-sm text-muted-foreground hidden sm:inline">
                   InduSoft ERP Industrial
                 </span>
               </div>
             </header>
             <main className="flex-1 overflow-auto">
-              <div className="container mx-auto p-3 sm:p-4 md:p-6 lg:p-8 max-w-full">
+              <div className="container mx-auto p-4 max-w-full">
                 {children}
               </div>
             </main>

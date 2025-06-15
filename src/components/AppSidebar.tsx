@@ -10,7 +10,6 @@ import {
   SidebarMenuItem,
   SidebarHeader,
   SidebarFooter,
-  SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { Building2, Users, Package, ShoppingCart, CreditCard, Factory, BarChart3, Settings } from "lucide-react"
 import { Link } from "react-router-dom"
@@ -78,15 +77,13 @@ const menuItems = [
 
 export function AppSidebar() {
   return (
-    <Sidebar className="border-r border-border" collapsible="offcanvas">
-      <SidebarHeader className="border-b border-border p-3 md:p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center group-data-[collapsible=icon]:justify-center">
-            <Factory className="h-6 w-6 md:h-8 md:w-8 text-primary flex-shrink-0" />
-            <div className="ml-2 group-data-[collapsible=icon]:hidden">
-              <h1 className="text-base md:text-lg font-bold text-foreground">InduSoft</h1>
-              <p className="text-xs text-muted-foreground">ERP Industrial</p>
-            </div>
+    <Sidebar side="left" variant="sidebar" collapsible="offcanvas">
+      <SidebarHeader className="border-b border-border p-4">
+        <div className="flex items-center">
+          <Factory className="h-8 w-8 text-primary" />
+          <div className="ml-3">
+            <h1 className="text-lg font-bold text-foreground">InduSoft</h1>
+            <p className="text-xs text-muted-foreground">ERP Industrial</p>
           </div>
         </div>
       </SidebarHeader>
@@ -96,17 +93,17 @@ export function AppSidebar() {
           <SidebarGroup key={index}>
             {item.items ? (
               <>
-                <SidebarGroupLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center px-2 py-1">
-                  <item.icon className="h-3 w-3 md:h-4 md:w-4 mr-2 flex-shrink-0" />
-                  <span className="group-data-[collapsible=icon]:hidden">{item.title}</span>
+                <SidebarGroupLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center px-2 py-2">
+                  <item.icon className="h-4 w-4 mr-2" />
+                  {item.title}
                 </SidebarGroupLabel>
                 <SidebarGroupContent>
                   <SidebarMenu>
                     {item.items.map((subItem) => (
                       <SidebarMenuItem key={subItem.title}>
-                        <SidebarMenuButton asChild className="text-xs md:text-sm py-1.5 md:py-2">
+                        <SidebarMenuButton asChild className="text-sm py-2">
                           <Link to={subItem.url}>
-                            <span className="group-data-[collapsible=icon]:sr-only truncate">{subItem.title}</span>
+                            {subItem.title}
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
@@ -117,10 +114,10 @@ export function AppSidebar() {
             ) : (
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild className="text-xs md:text-sm font-medium py-1.5 md:py-2">
+                  <SidebarMenuButton asChild className="text-sm font-medium py-2">
                     <Link to={item.url}>
-                      <item.icon className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
-                      <span className="group-data-[collapsible=icon]:sr-only">{item.title}</span>
+                      <item.icon className="h-4 w-4" />
+                      {item.title}
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -130,10 +127,10 @@ export function AppSidebar() {
         ))}
       </SidebarContent>
       
-      <SidebarFooter className="border-t border-border p-3 md:p-4">
-        <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground group-data-[collapsible=icon]:justify-center">
-          <Users className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
-          <span className="group-data-[collapsible=icon]:hidden truncate">Admin User</span>
+      <SidebarFooter className="border-t border-border p-4">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Users className="h-4 w-4" />
+          <span>Admin User</span>
         </div>
       </SidebarFooter>
     </Sidebar>
