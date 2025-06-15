@@ -88,7 +88,6 @@ export function AppSidebar() {
               <p className="text-xs text-muted-foreground">ERP Industrial</p>
             </div>
           </div>
-          <SidebarTrigger className="md:hidden" />
         </div>
       </SidebarHeader>
       
