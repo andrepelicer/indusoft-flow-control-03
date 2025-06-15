@@ -17,8 +17,8 @@ interface ItemPedidoManagerProps {
   onTotalChange: (total: number) => void
 }
 
-// Mock de produtos - em um sistema real viria da API
-const produtosMock = [
+// Mock de produtos centralizado - ÚNICA FONTE DA VERDADE
+const PRODUTOS_DATABASE = [
   { id: 1, nome: "Chapa de Aço 1mm", codigo: "CH001", precoVenda: 120.00 },
   { id: 2, nome: "Perfil L 50x50x3", codigo: "PF002", precoVenda: 45.50 },
   { id: 3, nome: "Tubo Redondo 2\"", codigo: "TR003", precoVenda: 89.90 },
@@ -29,10 +29,10 @@ const produtosMock = [
   { id: 8, nome: "Arruela Lisa M8", codigo: "AR008", precoVenda: 0.25 },
   { id: 9, nome: "Chapa Galvanizada 2mm", codigo: "CG009", precoVenda: 180.00 },
   { id: 10, nome: "Barra Redonda 12mm", codigo: "BR010", precoVenda: 35.60 }
-]
+] as const
 
 // Gerador de ID único para itens do pedido
-let nextItemId = 1000
+let nextItemId = Date.now()
 
 export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemPedidoManagerProps) {
   const { toast } = useToast()
@@ -46,6 +46,16 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
   const [searchTerm, setSearchTerm] = useState("")
   const [showDropdown, setShowDropdown] = useState(false)
 
+  // Função para buscar produto com garantia de dados corretos
+  const buscarProdutoPorId = (produtoId: number) => {
+    const produto = PRODUTOS_DATABASE.find(p => p.id === produtoId)
+    if (!produto) {
+      console.error(`❌ Produto ID ${produtoId} não encontrado no banco de dados`)
+      return null
+    }
+    return { ...produto } // Retorna uma cópia para evitar mutação
+  }
+
   const calcularSubtotal = (item: ItemPedidoExpandido) => {
     const subtotal = item.quantidade * item.precoUnitario
     const desconto = (subtotal * (item.desconto || 0)) / 100
@@ -56,23 +66,12 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
     return itensAtuais.reduce((total, item) => total + calcularSubtotal(item), 0)
   }
 
-  // Função para garantir integridade dos dados do produto
-  const garantirIntegridadeProduto = (produtoId: number) => {
-    const produto = produtosMock.find(p => p.id === produtoId)
-    if (!produto) {
-      console.error('Produto não encontrado para ID:', produtoId)
-      return null
-    }
-    // Sempre retornar uma cópia do produto para evitar mutação
-    return { ...produto }
-  }
-
   const adicionarItem = () => {
     console.log('=== ADICIONANDO NOVO ITEM ===')
     console.log('Dados do novo item:', novoItem)
     
     if (!novoItem.produtoId || novoItem.produtoId === 0 || !novoItem.quantidade || novoItem.quantidade <= 0 || !novoItem.precoUnitario || novoItem.precoUnitario <= 0) {
-      console.log('Validação falhou:', novoItem)
+      console.log('❌ Validação falhou:', novoItem)
       toast({
         title: "Erro",
         description: "Preencha todos os campos obrigatórios.",
@@ -81,7 +80,7 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
       return
     }
 
-    const produto = garantirIntegridadeProduto(novoItem.produtoId)
+    const produto = buscarProdutoPorId(novoItem.produtoId)
     if (!produto) {
       toast({
         title: "Erro",
@@ -91,26 +90,25 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
       return
     }
 
-    const itemId = nextItemId++
+    const itemId = ++nextItemId
 
     const itemCompleto: ItemPedidoExpandido = {
       id: itemId,
-      produtoId: produto.id, // GARANTIR que produtoId === produto.id
+      produtoId: produto.id,
       quantidade: novoItem.quantidade || 1,
       precoUnitario: novoItem.precoUnitario || 0,
       desconto: novoItem.desconto || 0,
-      produto: produto, // Produto com integridade garantida
+      produto: produto,
       subtotal: 0
     }
 
     itemCompleto.subtotal = calcularSubtotal(itemCompleto)
 
-    console.log('Item criado:', {
+    console.log('✅ Item criado com sucesso:', {
       itemId: itemCompleto.id,
       produtoId: itemCompleto.produtoId,
       produtoNome: itemCompleto.produto.nome,
-      produtoIdInterno: itemCompleto.produto.id,
-      integridadeOK: itemCompleto.produtoId === itemCompleto.produto.id
+      verificacaoIntegridade: itemCompleto.produtoId === itemCompleto.produto.id
     })
 
     const novosItens = [...itens, itemCompleto]
@@ -138,7 +136,10 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
     console.log('ID do item a remover:', id)
     
     const item = itens.find(item => item.id === id)
-    if (!item) return
+    if (!item) {
+      console.log('❌ Item não encontrado para remoção')
+      return
+    }
     
     const novosItens = itens.filter(item => item.id !== id)
     onItensChange(novosItens)
@@ -153,7 +154,7 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
     
     toast({
       title: "Item removido",
-      description: `${item.produto?.nome} foi removido do pedido.`,
+      description: `${item.produto?.nome || 'Item'} foi removido do pedido.`,
     })
   }
 
@@ -165,18 +166,20 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
       if (item.id === id) {
         const itemAtualizado = { ...item, [campo]: valor }
         
-        // Se o produto foi alterado, garantir integridade
+        // Se o produto foi alterado, garantir integridade total
         if (campo === 'produtoId') {
-          const produto = garantirIntegridadeProduto(valor)
+          const produto = buscarProdutoPorId(valor)
           if (produto) {
             itemAtualizado.produto = produto
             itemAtualizado.precoUnitario = produto.precoVenda
-            console.log('Produto alterado com integridade:', {
+            console.log('✅ Produto alterado com integridade garantida:', {
               produtoId: itemAtualizado.produtoId,
               produtoNome: itemAtualizado.produto.nome,
-              produtoIdInterno: itemAtualizado.produto.id,
-              integridadeOK: itemAtualizado.produtoId === itemAtualizado.produto.id
+              verificacao: itemAtualizado.produtoId === itemAtualizado.produto.id
             })
+          } else {
+            console.error('❌ Erro ao alterar produto - produto não encontrado')
+            return item // Retorna item sem alteração
           }
         }
         
@@ -189,8 +192,8 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
     onTotalChange(calcularTotal(novosItens))
   }
 
-  const selecionarProduto = (produto: typeof produtosMock[0]) => {
-    console.log('Produto selecionado:', produto)
+  const selecionarProduto = (produto: typeof PRODUTOS_DATABASE[number]) => {
+    console.log('✅ Produto selecionado:', produto.nome)
     setNovoItem({
       ...novoItem,
       produtoId: produto.id,
@@ -211,10 +214,10 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
   }
 
   const gerarOrdemProducao = (item: ItemPedidoExpandido) => {
-    console.log('Gerando ordem de produção para item:', item)
+    console.log('Gerando ordem de produção para item:', item.id)
     
     if (!item || !item.produto) {
-      console.error('Item ou produto inválido:', item)
+      console.error('❌ Item ou produto inválido:', item)
       toast({
         title: "Erro",
         description: "Item inválido para gerar ordem de produção.",
@@ -226,7 +229,7 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
     // Verifica se já existe uma ordem para este produto
     const ordemExistente = ordens.find(ordem => ordem.produtoId === item.produtoId)
     if (ordemExistente) {
-      console.log('Ordem já existe:', ordemExistente)
+      console.log('⚠️ Ordem já existe:', ordemExistente.numero)
       toast({
         title: "Ordem já existe",
         description: `Já existe uma ordem de produção para ${item.produto.nome}.`,
@@ -248,14 +251,14 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
         observacoes: `Ordem gerada automaticamente do pedido de venda para ${item.produto.nome}`
       })
       
-      console.log('Ordem de Produção criada com sucesso:', novaOrdem)
+      console.log('✅ Ordem de Produção criada:', novaOrdem.numero)
       
       toast({
         title: "Ordem de Produção Criada",
         description: `Ordem ${novaOrdem.numero} criada com sucesso para ${novaOrdem.produto}!`,
       })
     } catch (error) {
-      console.error('Erro ao criar ordem de produção:', error)
+      console.error('❌ Erro ao criar ordem de produção:', error)
       toast({
         title: "Erro",
         description: "Erro ao criar ordem de produção.",
@@ -265,12 +268,11 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
   }
 
   const cancelarOrdemProducao = (item: ItemPedidoExpandido) => {
-    console.log('Cancelando ordem de produção para item:', item)
+    console.log('Cancelando ordem de produção para item:', item.id)
     
-    // Encontra e remove a ordem de produção
     const ordemExistente = ordens.find(ordem => ordem.produtoId === item.produtoId)
     if (ordemExistente) {
-      console.log('Removendo ordem existente:', ordemExistente.id)
+      console.log('✅ Removendo ordem existente:', ordemExistente.numero)
       removerOrdem(ordemExistente.id)
       
       toast({
@@ -278,7 +280,7 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
         description: `Ordem de produção cancelada para ${item.produto?.nome}!`,
       })
     } else {
-      console.log('Nenhuma ordem encontrada para cancelar')
+      console.log('⚠️ Nenhuma ordem encontrada para cancelar')
       toast({
         title: "Aviso",
         description: "Nenhuma ordem de produção encontrada para este item.",
@@ -287,61 +289,43 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
     }
   }
 
-  const produtosFiltrados = produtosMock.filter(produto =>
+  const produtosFiltrados = PRODUTOS_DATABASE.filter(produto =>
     produto.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
     produto.codigo.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  const produtoSelecionado = novoItem.produtoId ? produtosMock.find(p => p.id === novoItem.produtoId) : null
+  const produtoSelecionado = novoItem.produtoId ? PRODUTOS_DATABASE.find(p => p.id === novoItem.produtoId) : null
 
-  // Verifica se um item tem ordem de produção baseado na lista global de ordens
+  // Verifica se um item tem ordem de produção
   const itemTemOrdemProducao = (item: ItemPedidoExpandido) => {
-    const temOrdem = ordens.some(ordem => ordem.produtoId === item.produtoId)
-    return temOrdem
+    return ordens.some(ordem => ordem.produtoId === item.produtoId)
   }
 
-  // Função para validar e obter o produto correto com logs de depuração
+  // Função para garantir que o produto está correto
   const obterProdutoSeguro = (item: ItemPedidoExpandido) => {
-    console.log('=== VALIDANDO PRODUTO DO ITEM ===')
-    console.log('Item ID:', item.id)
-    console.log('produtoId:', item.produtoId)
-    console.log('produto salvo:', item.produto ? { id: item.produto.id, nome: item.produto.nome } : 'null')
+    // Sempre buscar o produto atual do banco de dados para garantir consistência
+    const produtoAtual = buscarProdutoPorId(item.produtoId)
     
-    // Verificar integridade: produtoId deve ser igual ao produto.id
-    if (item.produto && item.produto.id === item.produtoId) {
-      console.log('✅ INTEGRIDADE OK - Usando produto salvo')
+    if (produtoAtual) {
+      console.log(`✅ Produto correto obtido para item ${item.id}:`, produtoAtual.nome)
+      return produtoAtual
+    }
+    
+    // Fallback - usar dados salvos se disponível
+    if (item.produto) {
+      console.warn(`⚠️ Usando produto salvo para item ${item.id}:`, item.produto.nome)
       return item.produto
     }
     
-    // Se não há integridade, buscar o produto correto
-    console.log('❌ FALTA DE INTEGRIDADE - Buscando produto correto')
-    const produtoCorreto = garantirIntegridadeProduto(item.produtoId)
-    
-    if (produtoCorreto) {
-      console.log('✅ Produto encontrado no mock:', produtoCorreto.nome)
-      return produtoCorreto
-    }
-    
     // Último recurso
-    console.error('❌ PRODUTO NÃO ENCONTRADO - Usando dados básicos')
+    console.error(`❌ Nenhum produto encontrado para item ${item.id}`)
     return {
       id: item.produtoId,
       nome: `Produto ID ${item.produtoId}`,
       codigo: 'N/A',
-      precoVenda: item.precoUnitario
+      precoVenda: item.precoUnitario || 0
     }
   }
-
-  // Debug dos itens atuais
-  console.log('=== ESTADO ATUAL DOS ITENS ===')
-  itens.forEach(item => {
-    console.log(`Item ${item.id}:`, {
-      produtoId: item.produtoId,
-      produtoSalvo: item.produto ? item.produto.nome : 'null',
-      produtoSalvoId: item.produto ? item.produto.id : 'null',
-      integridade: item.produto ? item.produtoId === item.produto.id : false
-    })
-  })
 
   return (
     <Card>
@@ -471,11 +455,6 @@ export function ItemPedidoManager({ itens, onItensChange, onTotalChange }: ItemP
                       <div>
                         <div className="font-medium">{produtoSeguro.nome}</div>
                         <div className="text-sm text-muted-foreground">{produtoSeguro.codigo}</div>
-                        <div className="text-xs text-gray-400">
-                          Item: {item.id} | ProdutoID: {item.produtoId} | 
-                          Salvo: {item.produto?.id || 'N/A'} | 
-                          Válido: {item.produto?.id === item.produtoId ? '✅' : '❌'}
-                        </div>
                       </div>
                     </TableCell>
                     <TableCell>

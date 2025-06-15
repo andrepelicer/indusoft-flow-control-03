@@ -145,64 +145,116 @@ const PedidosVenda = () => {
   const valorTotalPedidos = pedidos.reduce((sum, p) => sum + p.valorTotal, 0)
 
   const handleSavePedido = (pedidoData: Pedido & { itens: ItemPedidoExpandido[] }) => {
-    console.log('Salvando pedido na página principal:', {
-      ...pedidoData,
+    console.log('=== SALVANDO PEDIDO NA PÁGINA PRINCIPAL ===')
+    console.log('Dados recebidos:', {
+      numero: pedidoData.numero,
       totalItens: pedidoData.itens?.length || 0,
-      itensDetalhes: pedidoData.itens?.map(i => ({ id: i.id, produto: i.produto?.nome, quantidade: i.quantidade }))
+      valorTotal: pedidoData.valorTotal
+    })
+    
+    // Log detalhado dos itens para debugging
+    pedidoData.itens?.forEach(item => {
+      console.log(`Item ${item.id}:`, {
+        produtoId: item.produtoId,
+        produto: item.produto?.nome,
+        produtoIdInterno: item.produto?.id,
+        quantidade: item.quantidade,
+        integridade: item.produto ? item.produtoId === item.produto.id : false
+      })
     })
     
     if (editingPedido) {
-      // Ao editar, preservar os itens com cuidado especial
+      console.log('=== ATUALIZANDO PEDIDO EXISTENTE ===')
+      console.log('ID do pedido sendo editado:', editingPedido.id)
+      
       setPedidos(prev => prev.map(p => {
         if (p.id === editingPedido.id) {
           const pedidoAtualizado = { 
             ...pedidoData, 
             id: editingPedido.id,
-            itens: pedidoData.itens ? [...pedidoData.itens] : [] // Garantir que os itens sejam copiados
+            itens: pedidoData.itens ? [...pedidoData.itens] : []
           } as PedidoComId
-          console.log('Pedido atualizado com sucesso:', pedidoAtualizado.numero, 'com', pedidoAtualizado.itens?.length, 'itens')
+          
+          console.log('✅ Pedido atualizado:', {
+            id: pedidoAtualizado.id,
+            numero: pedidoAtualizado.numero,
+            totalItens: pedidoAtualizado.itens?.length || 0
+          })
+          
           return pedidoAtualizado
         }
         return p
       }))
+      
+      toast({
+        title: "Pedido atualizado",
+        description: `Pedido ${pedidoData.numero} foi atualizado com sucesso.`,
+      })
     } else {
-      // Ao criar novo, incluir os itens
+      console.log('=== CRIANDO NOVO PEDIDO ===')
+      
       const newId = Math.max(...pedidos.map(p => p.id)) + 1
       const novoPedido = { 
         ...pedidoData, 
         id: newId,
         itens: pedidoData.itens ? [...pedidoData.itens] : []
       } as PedidoComId
+      
       setPedidos(prev => [...prev, novoPedido])
-      console.log('Novo pedido criado com', pedidoData.itens?.length || 0, 'itens')
+      
+      console.log('✅ Novo pedido criado:', {
+        id: novoPedido.id,
+        numero: novoPedido.numero,
+        totalItens: novoPedido.itens?.length || 0
+      })
+      
+      toast({
+        title: "Pedido criado",
+        description: `Pedido ${pedidoData.numero} foi criado com sucesso.`,
+      })
     }
+    
     setEditingPedido(undefined)
   }
 
   const handleEditPedido = (pedido: PedidoComId) => {
-    console.log('Iniciando edição do pedido:', pedido.numero, 'com', pedido.itens?.length || 0, 'itens')
-    console.log('Itens do pedido:', pedido.itens)
-    // Garantir que o pedido tem uma cópia dos itens
+    console.log('=== INICIANDO EDIÇÃO DO PEDIDO ===')
+    console.log('Pedido:', pedido.numero, 'ID:', pedido.id)
+    console.log('Itens do pedido:', pedido.itens?.length || 0)
+    
+    // Criar uma cópia profunda do pedido para edição
     const pedidoParaEdicao = {
       ...pedido,
-      itens: pedido.itens ? [...pedido.itens] : []
+      itens: pedido.itens ? pedido.itens.map(item => ({
+        ...item,
+        produto: item.produto ? { ...item.produto } : undefined
+      })) : []
     }
+    
+    console.log('Pedido preparado para edição:', {
+      numero: pedidoParaEdicao.numero,
+      totalItens: pedidoParaEdicao.itens?.length || 0
+    })
+    
     setEditingPedido(pedidoParaEdicao)
     setFormOpen(true)
   }
 
   const handleViewPedido = (pedido: PedidoComId) => {
+    console.log('Visualizando pedido:', pedido.numero)
     setViewingPedido(pedido)
     setDetalhesOpen(true)
   }
 
   const handleDeletePedido = (id: number) => {
+    console.log('Solicitando exclusão do pedido ID:', id)
     setPedidoToDelete(id)
     setDeleteDialogOpen(true)
   }
 
   const confirmDelete = () => {
     if (pedidoToDelete) {
+      console.log('Confirmando exclusão do pedido ID:', pedidoToDelete)
       setPedidos(prev => prev.filter(p => p.id !== pedidoToDelete))
       toast({
         title: "Pedido excluído",
@@ -211,6 +263,12 @@ const PedidosVenda = () => {
     }
     setDeleteDialogOpen(false)
     setPedidoToDelete(null)
+  }
+
+  const handleNovoFormOpen = () => {
+    console.log('=== ABRINDO FORMULÁRIO PARA NOVO PEDIDO ===')
+    setEditingPedido(undefined)
+    setFormOpen(true)
   }
 
   const getStatusBadge = (status: string) => {
@@ -240,7 +298,7 @@ const PedidosVenda = () => {
             <CheckCircle className="h-4 w-4 mr-2" />
             Aprovados ({pedidosAprovados.length})
           </Button>
-          <Button onClick={() => setFormOpen(true)}>
+          <Button onClick={handleNovoFormOpen}>
             <Plus className="h-4 w-4 mr-2" />
             Novo Pedido
           </Button>

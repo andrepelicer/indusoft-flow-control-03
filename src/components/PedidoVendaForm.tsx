@@ -1,3 +1,4 @@
+
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
@@ -37,6 +38,20 @@ interface PedidoVendaFormProps {
   onSave: (pedido: Pedido & { itens: ItemPedidoExpandido[] }) => void
 }
 
+// Mock de produtos para garantir consistência
+const produtosMock = [
+  { id: 1, nome: "Chapa de Aço 1mm", codigo: "CH001", precoVenda: 120.00 },
+  { id: 2, nome: "Perfil L 50x50x3", codigo: "PF002", precoVenda: 45.50 },
+  { id: 3, nome: "Tubo Redondo 2\"", codigo: "TR003", precoVenda: 89.90 },
+  { id: 4, nome: "Solda Eletrodo 3,25mm", codigo: "SO004", precoVenda: 25.80 },
+  { id: 5, nome: "Tinta Anticorrosiva", codigo: "TI005", precoVenda: 67.30 },
+  { id: 6, nome: "Parafuso M8x25", codigo: "PA006", precoVenda: 1.20 },
+  { id: 7, nome: "Porca M8", codigo: "PO007", precoVenda: 0.80 },
+  { id: 8, nome: "Arruela Lisa M8", codigo: "AR008", precoVenda: 0.25 },
+  { id: 9, nome: "Chapa Galvanizada 2mm", codigo: "CG009", precoVenda: 180.00 },
+  { id: 10, nome: "Barra Redonda 12mm", codigo: "BR010", precoVenda: 35.60 }
+]
+
 export function PedidoVendaForm({ open, onOpenChange, pedido, onSave }: PedidoVendaFormProps) {
   const { toast } = useToast()
   const [itens, setItens] = useState<ItemPedidoExpandido[]>([])
@@ -57,65 +72,45 @@ export function PedidoVendaForm({ open, onOpenChange, pedido, onSave }: PedidoVe
     }
   })
 
-  // Função para validar e corrigir integridade dos itens carregados
-  const validarIntegridadeItens = (itensOriginais: ItemPedidoExpandido[]) => {
-    console.log('=== VALIDANDO INTEGRIDADE DOS ITENS CARREGADOS ===')
-    
-    const produtosMock = [
-      { id: 1, nome: "Chapa de Aço 1mm", codigo: "CH001", precoVenda: 120.00 },
-      { id: 2, nome: "Perfil L 50x50x3", codigo: "PF002", precoVenda: 45.50 },
-      { id: 3, nome: "Tubo Redondo 2\"", codigo: "TR003", precoVenda: 89.90 },
-      { id: 4, nome: "Solda Eletrodo 3,25mm", codigo: "SO004", precoVenda: 25.80 },
-      { id: 5, nome: "Tinta Anticorrosiva", codigo: "TI005", precoVenda: 67.30 },
-      { id: 6, nome: "Parafuso M8x25", codigo: "PA006", precoVenda: 1.20 },
-      { id: 7, nome: "Porca M8", codigo: "PO007", precoVenda: 0.80 },
-      { id: 8, nome: "Arruela Lisa M8", codigo: "AR008", precoVenda: 0.25 },
-      { id: 9, nome: "Chapa Galvanizada 2mm", codigo: "CG009", precoVenda: 180.00 },
-      { id: 10, nome: "Barra Redonda 12mm", codigo: "BR010", precoVenda: 35.60 }
-    ]
+  // Função para garantir que cada item tem o produto correto
+  const normalizarItens = (itensOriginais: ItemPedidoExpandido[]): ItemPedidoExpandido[] => {
+    console.log('=== NORMALIZANDO ITENS ===')
     
     return itensOriginais.map(item => {
-      console.log(`Validando item ${item.id}:`, {
+      console.log(`Normalizando item ${item.id}:`, {
         produtoId: item.produtoId,
-        produtoSalvo: item.produto ? item.produto.nome : 'null',
-        produtoSalvoId: item.produto?.id
+        produtoAtual: item.produto?.nome,
+        produtoIdAtual: item.produto?.id
       })
       
-      // Verificar se há integridade entre produtoId e produto.id
-      if (item.produto && item.produto.id === item.produtoId) {
-        console.log('✅ Item com integridade OK')
-        return {
-          ...item,
-          produto: { ...item.produto }, // Criar cópia
-          subtotal: item.subtotal || (item.quantidade * item.precoUnitario * (1 - (item.desconto || 0) / 100))
-        }
-      }
-      
-      // Se não há integridade, corrigir usando o produtoId
-      console.log('❌ Corrigindo integridade do item')
+      // Buscar sempre o produto correto pelo ID
       const produtoCorreto = produtosMock.find(p => p.id === item.produtoId)
       
-      if (produtoCorreto) {
-        console.log('✅ Produto corrigido:', produtoCorreto.nome)
-        return {
-          ...item,
-          produto: { ...produtoCorreto },
-          subtotal: item.subtotal || (item.quantidade * item.precoUnitario * (1 - (item.desconto || 0) / 100))
-        }
+      if (!produtoCorreto) {
+        console.error(`❌ Produto não encontrado para ID ${item.produtoId}`)
+        return item
       }
       
-      // Último recurso - manter dados existentes
-      console.warn('⚠️ Mantendo dados existentes do item')
-      return {
+      const itemNormalizado = {
         ...item,
-        produto: item.produto || {
-          id: item.produtoId,
-          nome: `Produto ID ${item.produtoId}`,
-          codigo: 'N/A',
-          precoVenda: item.precoUnitario
+        produtoId: produtoCorreto.id, // Garantir que é o ID correto
+        produto: {
+          id: produtoCorreto.id,
+          nome: produtoCorreto.nome,
+          codigo: produtoCorreto.codigo,
+          precoVenda: produtoCorreto.precoVenda
         },
-        subtotal: item.subtotal || (item.quantidade * item.precoUnitario * (1 - (item.desconto || 0) / 100))
+        subtotal: item.quantidade * item.precoUnitario * (1 - (item.desconto || 0) / 100)
       }
+      
+      console.log(`✅ Item normalizado:`, {
+        id: itemNormalizado.id,
+        produtoId: itemNormalizado.produtoId,
+        produto: itemNormalizado.produto.nome,
+        verificacao: itemNormalizado.produtoId === itemNormalizado.produto.id
+      })
+      
+      return itemNormalizado
     })
   }
 
@@ -124,26 +119,18 @@ export function PedidoVendaForm({ open, onOpenChange, pedido, onSave }: PedidoVe
     if (open) {
       if (pedido) {
         console.log('=== CARREGANDO PEDIDO PARA EDIÇÃO ===')
-        console.log('Pedido:', pedido.numero)
-        console.log('Itens originais:', pedido.itens?.length || 0)
+        console.log('Pedido numero:', pedido.numero)
+        console.log('Pedido ID:', pedido.id)
+        console.log('Itens recebidos:', pedido.itens?.length || 0)
         
         isEditingRef.current = true
         form.reset(pedido)
         
-        // Carregar e validar itens com integridade
         if (pedido.itens && pedido.itens.length > 0) {
-          const itensValidados = validarIntegridadeItens(pedido.itens)
-          setItens(itensValidados)
-          
-          console.log('Itens carregados e validados:', itensValidados.length)
-          itensValidados.forEach(item => {
-            console.log(`Item ${item.id}:`, {
-              produtoId: item.produtoId,
-              produto: item.produto.nome,
-              produtoIdInterno: item.produto.id,
-              integridadeOK: item.produtoId === item.produto.id
-            })
-          })
+          console.log('Itens do pedido antes da normalização:', pedido.itens)
+          const itensNormalizados = normalizarItens(pedido.itens)
+          console.log('Itens após normalização:', itensNormalizados)
+          setItens(itensNormalizados)
         } else {
           setItens([])
           console.log('Nenhum item encontrado no pedido')
@@ -151,8 +138,9 @@ export function PedidoVendaForm({ open, onOpenChange, pedido, onSave }: PedidoVe
       } else {
         console.log('=== CRIANDO NOVO PEDIDO ===')
         isEditingRef.current = false
+        const numeroPedido = `PV-${Date.now()}`
         form.reset({
-          numero: `PV-${Date.now()}`,
+          numero: numeroPedido,
           clienteId: 0,
           vendedorId: 0,
           dataPedido: new Date().toISOString().split('T')[0],
@@ -163,27 +151,20 @@ export function PedidoVendaForm({ open, onOpenChange, pedido, onSave }: PedidoVe
           valorTotal: 0
         })
         setItens([])
+        console.log('Novo pedido criado com número:', numeroPedido)
       }
     }
   }, [pedido, form, open])
 
   const handleItensChange = useCallback((novosItens: ItemPedidoExpandido[]) => {
     console.log('=== ALTERAÇÃO DE ITENS ===')
-    console.log('Novos itens recebidos:', novosItens.length)
-    console.log('Detalhes dos novos itens:', novosItens.map(i => ({ 
-      id: i.id, 
-      produtoId: i.produtoId, 
-      produto: i.produto?.nome,
-      quantidade: i.quantidade 
-    })))
+    console.log('Itens recebidos:', novosItens.length)
     
-    // Criar uma cópia profunda para evitar mutações
-    const itensCopiados = novosItens.map(item => ({
-      ...item,
-      produto: item.produto ? { ...item.produto } : undefined
-    }))
+    // Normalizar os itens recebidos
+    const itensNormalizados = normalizarItens(novosItens)
+    setItens(itensNormalizados)
     
-    setItens(itensCopiados)
+    console.log('Itens definidos no estado:', itensNormalizados.length)
   }, [])
 
   const handleTotalChange = useCallback((novoTotal: number) => {
@@ -194,50 +175,19 @@ export function PedidoVendaForm({ open, onOpenChange, pedido, onSave }: PedidoVe
   }, [form])
 
   const handleDescontoChange = useCallback((desconto: number) => {
-    console.log('Aplicando desconto:', desconto, '% sobre', itens.length, 'itens')
+    console.log('Aplicando desconto:', desconto, '%')
     const totalItens = itens.reduce((sum, item) => sum + (item.subtotal || 0), 0)
     const totalComDesconto = totalItens * (1 - desconto / 100)
     form.setValue('valorTotal', totalComDesconto)
   }, [itens, form])
 
   const onSubmit = (data: Pedido) => {
-    console.log('=== SUBMETENDO PEDIDO ===')
-    console.log('Dados do formulário:', { ...data, totalItens: itens.length })
+    console.log('=== SALVANDO PEDIDO ===')
+    console.log('Dados do formulário:', data)
+    console.log('Total de itens para salvar:', itens.length)
     
-    // Validação final dos itens antes de salvar
-    const itensFinais = itens.map(item => {
-      // Garantir que cada item tem integridade antes de salvar
-      const itemFinal = {
-        ...item,
-        id: item.id || Date.now() + Math.random(),
-        produtoId: item.produtoId,
-        quantidade: item.quantidade,
-        precoUnitario: item.precoUnitario,
-        desconto: item.desconto || 0,
-        produto: item.produto ? { ...item.produto } : undefined,
-        subtotal: item.subtotal || (item.quantidade * item.precoUnitario * (1 - (item.desconto || 0) / 100))
-      }
-      
-      // Verificação final de integridade
-      if (itemFinal.produto && itemFinal.produtoId !== itemFinal.produto.id) {
-        console.error('❌ ERRO DE INTEGRIDADE DETECTADO NA SUBMISSÃO:', {
-          itemId: itemFinal.id,
-          produtoId: itemFinal.produtoId,
-          produtoIdInterno: itemFinal.produto.id
-        })
-      } else {
-        console.log('✅ Item validado para submissão:', {
-          itemId: itemFinal.id,
-          produtoId: itemFinal.produtoId,
-          produto: itemFinal.produto?.nome
-        })
-      }
-      
-      return itemFinal
-    })
-    
-    // Para novos pedidos, exigir pelo menos um item
-    if (!isEditingRef.current && itensFinais.length === 0) {
+    // Validação: novos pedidos devem ter pelo menos um item
+    if (!isEditingRef.current && itens.length === 0) {
       toast({
         title: "Erro",
         description: "Adicione pelo menos um item ao pedido.",
@@ -246,32 +196,39 @@ export function PedidoVendaForm({ open, onOpenChange, pedido, onSave }: PedidoVe
       return
     }
     
-    const pedidoComItens = { 
-      ...data, 
-      itens: itensFinais
-    }
+    // Garantir que os itens estão normalizados antes de salvar
+    const itensParaSalvar = normalizarItens(itens)
     
-    console.log('=== PEDIDO FINAL PARA SALVAR ===')
-    console.log('Total de itens:', pedidoComItens.itens.length)
-    pedidoComItens.itens.forEach(item => {
-      console.log(`Item final ${item.id}:`, {
+    console.log('=== ITENS FINAIS PARA SALVAR ===')
+    itensParaSalvar.forEach(item => {
+      console.log(`Item ${item.id}:`, {
         produtoId: item.produtoId,
         produto: item.produto?.nome,
         produtoIdInterno: item.produto?.id,
-        integridade: item.produto ? item.produtoId === item.produto.id : false
+        integridade: item.produto ? item.produtoId === item.produto.id : false,
+        quantidade: item.quantidade,
+        precoUnitario: item.precoUnitario
       })
     })
     
+    const pedidoParaSalvar = { 
+      ...data, 
+      itens: itensParaSalvar
+    }
+    
     try {
-      onSave(pedidoComItens)
+      onSave(pedidoParaSalvar)
       
+      const acao = isEditingRef.current ? "atualizado" : "criado"
       toast({
-        title: pedido ? "Pedido atualizado" : "Pedido criado",
-        description: "As informações foram salvas com sucesso.",
+        title: `Pedido ${acao}`,
+        description: `O pedido foi ${acao} com sucesso.`,
       })
+      
+      console.log(`✅ Pedido ${acao} com sucesso:`, pedidoParaSalvar.numero)
       onOpenChange(false)
     } catch (error) {
-      console.error('Erro ao salvar pedido:', error)
+      console.error('❌ Erro ao salvar pedido:', error)
       toast({
         title: "Erro",
         description: "Erro ao salvar o pedido. Tente novamente.",
@@ -280,13 +237,14 @@ export function PedidoVendaForm({ open, onOpenChange, pedido, onSave }: PedidoVe
     }
   }
 
-  // Não resetar os itens quando o modal fecha para evitar perda de dados
+  // Limpar estado quando modal fecha
   useEffect(() => {
-    if (!open && !isEditingRef.current) {
-      console.log('Modal fechado, limpando estado apenas se não estiver editando')
+    if (!open) {
+      console.log('Modal fechado, limpando estado')
       setItens([])
+      form.reset()
     }
-  }, [open])
+  }, [open, form])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -496,7 +454,7 @@ export function PedidoVendaForm({ open, onOpenChange, pedido, onSave }: PedidoVe
                 Cancelar
               </Button>
               <Button type="submit">
-                {pedido ? "Atualizar" : "Salvar"}
+                Salvar
               </Button>
             </div>
           </form>
