@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ShoppingCart, Plus, Search, Edit, Trash2, Eye, CheckCircle } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { PedidoVendaForm } from "@/components/PedidoVendaForm"
 import { PedidoVendaDetalhes } from "@/components/PedidoVendaDetalhes"
 import { type Pedido, ItemPedidoExpandido } from "@/lib/validations"
@@ -22,6 +22,97 @@ import {
 
 type PedidoComId = Pedido & { id: number; itens?: ItemPedidoExpandido[] }
 
+// Dados iniciais dos pedidos
+const PEDIDOS_INICIAIS: PedidoComId[] = [
+  { 
+    id: 1, 
+    numero: "PV-2024-001", 
+    clienteId: 1,
+    vendedorId: 1,
+    dataPedido: "2024-01-20",
+    dataEntrega: "2024-02-20",
+    status: "Aprovado" as const,
+    observacoes: "Entrega em lote único",
+    desconto: 2.5,
+    valorTotal: 18750.00,
+    itens: [
+      {
+        id: 1001,
+        produtoId: 1,
+        quantidade: 100,
+        precoUnitario: 120.00,
+        desconto: 0,
+        produto: { id: 1, nome: "Chapa de Aço 1mm", codigo: "CH001", precoVenda: 120.00 },
+        subtotal: 12000.00
+      },
+      {
+        id: 1002,
+        produtoId: 2,
+        quantidade: 150,
+        precoUnitario: 45.50,
+        desconto: 0,
+        produto: { id: 2, nome: "Perfil L 50x50x3", codigo: "PF002", precoVenda: 45.50 },
+        subtotal: 6825.00
+      }
+    ]
+  },
+  { 
+    id: 2, 
+    numero: "PV-2024-002", 
+    clienteId: 2,
+    vendedorId: 2,
+    dataPedido: "2024-01-22",
+    dataEntrega: "2024-02-25",
+    status: "Faturado" as const,
+    observacoes: "Pagamento à vista",
+    desconto: 0,
+    valorTotal: 9200.00,
+    itens: [
+      {
+        id: 2001,
+        produtoId: 3,
+        quantidade: 50,
+        precoUnitario: 89.90,
+        desconto: 0,
+        produto: { id: 3, nome: "Tubo Redondo 2\"", codigo: "TR003", precoVenda: 89.90 },
+        subtotal: 4495.00
+      },
+      {
+        id: 2002,
+        produtoId: 4,
+        quantidade: 180,
+        precoUnitario: 25.80,
+        desconto: 0,
+        produto: { id: 4, nome: "Solda Eletrodo 3,25mm", codigo: "SO004", precoVenda: 25.80 },
+        subtotal: 4644.00
+      }
+    ]
+  },
+  { 
+    id: 3, 
+    numero: "PV-2024-003", 
+    clienteId: 3,
+    vendedorId: 1,
+    dataPedido: "2024-01-25",
+    dataEntrega: "",
+    status: "Pendente" as const,
+    observacoes: "Aguardando aprovação do cliente",
+    desconto: 5,
+    valorTotal: 14300.00,
+    itens: [
+      {
+        id: 3001,
+        produtoId: 9,
+        quantidade: 80,
+        precoUnitario: 180.00,
+        desconto: 0,
+        produto: { id: 9, nome: "Chapa Galvanizada 2mm", codigo: "CG009", precoVenda: 180.00 },
+        subtotal: 14400.00
+      }
+    ]
+  },
+]
+
 const PedidosVenda = () => {
   const [searchTerm, setSearchTerm] = useState("")
   const [formOpen, setFormOpen] = useState(false)
@@ -32,95 +123,46 @@ const PedidosVenda = () => {
   const [pedidoToDelete, setPedidoToDelete] = useState<number | null>(null)
   const { toast } = useToast()
   
-  const [pedidos, setPedidos] = useState<PedidoComId[]>([
-    { 
-      id: 1, 
-      numero: "PV-2024-001", 
-      clienteId: 1,
-      vendedorId: 1,
-      dataPedido: "2024-01-20",
-      dataEntrega: "2024-02-20",
-      status: "Aprovado" as const,
-      observacoes: "Entrega em lote único",
-      desconto: 2.5,
-      valorTotal: 18750.00,
-      itens: [
-        {
-          id: 1001,
-          produtoId: 1,
-          quantidade: 100,
-          precoUnitario: 120.00,
-          desconto: 0,
-          produto: { id: 1, nome: "Chapa de Aço 1mm", codigo: "CH001", precoVenda: 120.00 },
-          subtotal: 12000.00
-        },
-        {
-          id: 1002,
-          produtoId: 2,
-          quantidade: 150,
-          precoUnitario: 45.50,
-          desconto: 0,
-          produto: { id: 2, nome: "Perfil L 50x50x3", codigo: "PF002", precoVenda: 45.50 },
-          subtotal: 6825.00
-        }
-      ]
-    },
-    { 
-      id: 2, 
-      numero: "PV-2024-002", 
-      clienteId: 2,
-      vendedorId: 2,
-      dataPedido: "2024-01-22",
-      dataEntrega: "2024-02-25",
-      status: "Faturado" as const,
-      observacoes: "Pagamento à vista",
-      desconto: 0,
-      valorTotal: 9200.00,
-      itens: [
-        {
-          id: 2001,
-          produtoId: 3,
-          quantidade: 50,
-          precoUnitario: 89.90,
-          desconto: 0,
-          produto: { id: 3, nome: "Tubo Redondo 2\"", codigo: "TR003", precoVenda: 89.90 },
-          subtotal: 4495.00
-        },
-        {
-          id: 2002,
-          produtoId: 4,
-          quantidade: 180,
-          precoUnitario: 25.80,
-          desconto: 0,
-          produto: { id: 4, nome: "Solda Eletrodo 3,25mm", codigo: "SO004", precoVenda: 25.80 },
-          subtotal: 4644.00
-        }
-      ]
-    },
-    { 
-      id: 3, 
-      numero: "PV-2024-003", 
-      clienteId: 3,
-      vendedorId: 1,
-      dataPedido: "2024-01-25",
-      dataEntrega: "",
-      status: "Pendente" as const,
-      observacoes: "Aguardando aprovação do cliente",
-      desconto: 5,
-      valorTotal: 14300.00,
-      itens: [
-        {
-          id: 3001,
-          produtoId: 9,
-          quantidade: 80,
-          precoUnitario: 180.00,
-          desconto: 0,
-          produto: { id: 9, nome: "Chapa Galvanizada 2mm", codigo: "CG009", precoVenda: 180.00 },
-          subtotal: 14400.00
-        }
-      ]
-    },
-  ])
+  // Função para carregar pedidos do localStorage ou usar dados iniciais
+  const carregarPedidos = (): PedidoComId[] => {
+    try {
+      const pedidosSalvos = localStorage.getItem('pedidos-venda')
+      if (pedidosSalvos) {
+        return JSON.parse(pedidosSalvos)
+      }
+    } catch (error) {
+      console.error('Erro ao carregar pedidos do localStorage:', error)
+    }
+    return PEDIDOS_INICIAIS
+  }
+
+  // Função para salvar pedidos no localStorage
+  const salvarPedidos = (pedidos: PedidoComId[]) => {
+    try {
+      localStorage.setItem('pedidos-venda', JSON.stringify(pedidos))
+      console.log('✅ Pedidos salvos no localStorage:', pedidos.length)
+    } catch (error) {
+      console.error('❌ Erro ao salvar pedidos no localStorage:', error)
+    }
+  }
+
+  const [pedidos, setPedidos] = useState<PedidoComId[]>([])
+
+  // Carregar pedidos ao montar o componente
+  useEffect(() => {
+    console.log('=== CARREGANDO PEDIDOS ===')
+    const pedidosCarregados = carregarPedidos()
+    console.log('Pedidos carregados:', pedidosCarregados.length)
+    setPedidos(pedidosCarregados)
+  }, [])
+
+  // Salvar pedidos sempre que o estado mudar
+  useEffect(() => {
+    if (pedidos.length > 0) {
+      console.log('=== SALVANDO PEDIDOS ===', pedidos.length)
+      salvarPedidos(pedidos)
+    }
+  }, [pedidos])
 
   const clienteNomes = {
     1: "Metalúrgica Santos Ltda.",
@@ -193,7 +235,7 @@ const PedidosVenda = () => {
     } else {
       console.log('=== CRIANDO NOVO PEDIDO ===')
       
-      const newId = Math.max(...pedidos.map(p => p.id)) + 1
+      const newId = pedidos.length > 0 ? Math.max(...pedidos.map(p => p.id)) + 1 : 1
       const novoPedido = { 
         ...pedidoData, 
         id: newId,
@@ -247,18 +289,30 @@ const PedidosVenda = () => {
   }
 
   const handleDeletePedido = (id: number) => {
-    console.log('Solicitando exclusão do pedido ID:', id)
+    console.log('=== SOLICITAÇÃO DE EXCLUSÃO ===')
+    console.log('Pedido ID para exclusão:', id)
     setPedidoToDelete(id)
     setDeleteDialogOpen(true)
   }
 
   const confirmDelete = () => {
     if (pedidoToDelete) {
-      console.log('Confirmando exclusão do pedido ID:', pedidoToDelete)
-      setPedidos(prev => prev.filter(p => p.id !== pedidoToDelete))
+      console.log('=== CONFIRMANDO EXCLUSÃO ===')
+      console.log('Excluindo pedido ID:', pedidoToDelete)
+      
+      // Encontrar o pedido para mostrar informações no toast
+      const pedidoParaExcluir = pedidos.find(p => p.id === pedidoToDelete)
+      
+      // Remover do estado (que automaticamente salva no localStorage via useEffect)
+      setPedidos(prev => {
+        const novosPedidos = prev.filter(p => p.id !== pedidoToDelete)
+        console.log('✅ Pedidos após exclusão:', novosPedidos.length)
+        return novosPedidos
+      })
+      
       toast({
         title: "Pedido excluído",
-        description: "O pedido foi removido com sucesso.",
+        description: `Pedido ${pedidoParaExcluir?.numero || pedidoToDelete} foi removido permanentemente.`,
       })
     }
     setDeleteDialogOpen(false)
@@ -453,7 +507,7 @@ const PedidosVenda = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir este pedido? Esta ação não pode ser desfeita.
+              Tem certeza que deseja excluir este pedido? Esta ação não pode ser desfeita e o pedido será removido permanentemente.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
