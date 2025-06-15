@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Plus, Edit, Eye, Play, Pause, CheckCircle, XCircle, Trash2, Settings, Check } from "lucide-react"
 import { format } from "date-fns"
 import EtapasProducaoManager from "@/components/EtapasProducaoManager"
+import { useOrdensProducao, OrdemProducao } from "@/contexts/OrdensProducaoContext"
 
 interface EtapaProducao {
   id: number
@@ -34,17 +35,13 @@ interface ProdutoOrdem {
   etapas: EtapaProducao[]
 }
 
-interface OrdemProducao {
-  id: number
-  numero: string
-  descricao: string
+interface OrdemProducaoCompleta extends Omit<OrdemProducao, 'status'> {
   dataInicio: string
   dataPrevisao: string
   dataFinalizacao?: string
   status: 'Planejada' | 'Em Andamento' | 'Pausada' | 'Finalizada' | 'Cancelada'
   prioridade: 'Baixa' | 'Normal' | 'Alta' | 'Urgente'
   responsavelGeral: string
-  observacoes?: string
   produtos: ProdutoOrdem[]
 }
 
@@ -74,6 +71,8 @@ const etapasDisponiveis = [
 ]
 
 export default function OrdensProducao() {
+  const { ordens: ordensContext, adicionarOrdem, atualizarOrdem } = useOrdensProducao()
+  
   // Estado para etapas cadastradas
   const [etapasCadastradas] = useState([
     { id: 1, nome: "Preparação de Material", descricao: "Separação e preparação dos materiais necessários", ordem: 1, ativo: true },
@@ -86,50 +85,37 @@ export default function OrdensProducao() {
     { id: 8, nome: "Embalagem", descricao: "Embalagem do produto final", ordem: 8, ativo: true }
   ])
 
-  const [ordens, setOrdens] = useState<OrdemProducao[]>([
-    {
-      id: 1,
-      numero: "OP-2024-001",
-      descricao: "Produção de peças para projeto industrial",
-      dataInicio: "2024-01-15",
-      dataPrevisao: "2024-01-25",
-      status: "Em Andamento",
-      prioridade: "Alta",
-      responsavelGeral: "João Silva",
-      observacoes: "Produção em linha dupla",
-      produtos: [
-        {
-          id: 1,
-          codigoProduto: "AI304-001",
-          nomeProduto: "Peça de Aço Inox 304",
-          quantidade: 100,
-          quantidadeProduzida: 75,
-          dataInicioProduto: "2024-01-15",
-          dataPrevisaoProduto: "2024-01-22",
-          status: "Em Andamento",
-          etapas: [
-            { id: 1, nome: "Preparação de Material", ordem: 1, concluida: true, dataConclusao: "2024-01-15", responsavel: "João Silva" },
-            { id: 2, nome: "Corte", ordem: 2, concluida: true, dataConclusao: "2024-01-16", responsavel: "João Silva" },
-            { id: 3, nome: "Usinagem", ordem: 3, concluida: false, responsavel: "Maria Santos" }
-          ]
-        },
-        {
-          id: 2,
-          codigoProduto: "AL2-002",
-          nomeProduto: "Chapa de Alumínio 2mm",
-          quantidade: 50,
-          quantidadeProduzida: 20,
-          dataInicioProduto: "2024-01-16",
-          dataPrevisaoProduto: "2024-01-24",
-          status: "Em Andamento",
-          etapas: [
-            { id: 1, nome: "Preparação de Material", ordem: 1, concluida: true, dataConclusao: "2024-01-16", responsavel: "Carlos Oliveira" },
-            { id: 2, nome: "Corte", ordem: 2, concluida: false, responsavel: "Carlos Oliveira" }
-          ]
-        }
-      ]
-    }
-  ])
+  // Converter ordens do contexto para o formato usado nesta página
+  const [ordens, setOrdens] = useState<OrdemProducaoCompleta[]>([])
+
+  useEffect(() => {
+    const ordensConvertidas: OrdemProducaoCompleta[] = ordensContext.map(ordem => ({
+      id: ordem.id,
+      numero: ordem.numero,
+      descricao: ordem.observacoes || "Ordem de produção",
+      dataInicio: ordem.dataCriacao,
+      dataPrevisao: ordem.dataPrevisao,
+      status: ordem.status === 'Pendente' ? 'Planejada' : 
+              ordem.status === 'Em Andamento' ? 'Em Andamento' :
+              ordem.status === 'Concluído' ? 'Finalizada' :
+              ordem.status === 'Cancelado' ? 'Cancelada' : 'Planejada',
+      prioridade: 'Normal' as const,
+      responsavelGeral: "Responsável Padrão",
+      observacoes: ordem.observacoes,
+      produtos: [{
+        id: 1,
+        codigoProduto: ordem.codigo,
+        nomeProduto: ordem.produto,
+        quantidade: ordem.quantidade,
+        quantidadeProduzida: 0,
+        dataInicioProduto: ordem.dataCriacao,
+        dataPrevisaoProduto: ordem.dataPrevisao,
+        status: 'Pendente' as const,
+        etapas: []
+      }]
+    }))
+    setOrdens(ordensConvertidas)
+  }, [ordensContext])
 
   const [produtos, setProdutos] = useState<ProdutoComId[]>([])
 
@@ -160,7 +146,7 @@ export default function OrdensProducao() {
   ])
 
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [selectedOrdem, setSelectedOrdem] = useState<OrdemProducao | null>(null)
+  const [selectedOrdem, setSelectedOrdem] = useState<OrdemProducaoCompleta | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [filtroStatus, setFiltroStatus] = useState<string>("Todos")
   const [isDetalhesOpen, setIsDetalhesOpen] = useState(false)
@@ -169,7 +155,7 @@ export default function OrdensProducao() {
   const [selectedProduto, setSelectedProduto] = useState<ProdutoOrdem | null>(null)
   const [dataFinalizacao, setDataFinalizacao] = useState("")
 
-  const [novaOrdem, setNovaOrdem] = useState<Partial<OrdemProducao>>({
+  const [novaOrdem, setNovaOrdem] = useState<Partial<OrdemProducaoCompleta>>({
     numero: "",
     descricao: "",
     dataInicio: "",
@@ -222,21 +208,48 @@ export default function OrdensProducao() {
   }
 
   const handleSalvar = () => {
+    console.log('Salvando ordem:', { isEditing, selectedOrdem, novaOrdem })
+    
     if (isEditing && selectedOrdem) {
-      setOrdens(ordens.map(ordem => 
-        ordem.id === selectedOrdem.id ? { ...selectedOrdem } : ordem
-      ))
-    } else {
-      const newId = Math.max(...ordens.map(o => o.id)) + 1
-      const ordem: OrdemProducao = {
-        ...novaOrdem as OrdemProducao,
-        id: newId,
-        numero: `OP-2024-${String(newId).padStart(3, '0')}`,
-        produtos: novaOrdem.produtos || []
+      // Atualizar ordem existente
+      const ordemAtualizada: OrdemProducao = {
+        id: selectedOrdem.id,
+        numero: selectedOrdem.numero,
+        produtoId: selectedOrdem.produtos[0]?.id || 1,
+        produto: selectedOrdem.produtos[0]?.nomeProduto || selectedOrdem.descricao,
+        codigo: selectedOrdem.produtos[0]?.codigoProduto || "",
+        quantidade: selectedOrdem.produtos[0]?.quantidade || 0,
+        status: selectedOrdem.status === 'Planejada' ? 'Pendente' :
+                selectedOrdem.status === 'Em Andamento' ? 'Em Andamento' :
+                selectedOrdem.status === 'Finalizada' ? 'Concluído' :
+                selectedOrdem.status === 'Cancelada' ? 'Cancelado' : 'Pendente',
+        dataCriacao: selectedOrdem.dataInicio,
+        dataPrevisao: selectedOrdem.dataPrevisao,
+        observacoes: selectedOrdem.observacoes || ""
       }
-      setOrdens([...ordens, ordem])
+      
+      atualizarOrdem(selectedOrdem.id, ordemAtualizada)
+    } else {
+      // Criar nova ordem
+      if (novaOrdem.produtos && novaOrdem.produtos.length > 0) {
+        const produto = novaOrdem.produtos[0]
+        const ordemParaContexto: Omit<OrdemProducao, 'id'> = {
+          numero: `OP-${Date.now()}`,
+          produtoId: produto.id,
+          produto: produto.nomeProduto,
+          codigo: produto.codigoProduto,
+          quantidade: produto.quantidade,
+          status: 'Pendente',
+          dataCriacao: novaOrdem.dataInicio || new Date().toISOString().split('T')[0],
+          dataPrevisao: novaOrdem.dataPrevisao || new Date().toISOString().split('T')[0],
+          observacoes: novaOrdem.observacoes || ""
+        }
+        
+        adicionarOrdem(ordemParaContexto)
+      }
     }
     
+    // Resetar formulário
     setIsDialogOpen(false)
     setIsEditing(false)
     setSelectedOrdem(null)
@@ -253,22 +266,31 @@ export default function OrdensProducao() {
     })
   }
 
-  const handleEditar = (ordem: OrdemProducao) => {
+  const handleEditar = (ordem: OrdemProducaoCompleta) => {
+    console.log('Editando ordem:', ordem)
     setSelectedOrdem(ordem)
     setIsEditing(true)
     setIsDialogOpen(true)
   }
 
-  const handleVerDetalhes = (ordem: OrdemProducao) => {
+  const handleVerDetalhes = (ordem: OrdemProducaoCompleta) => {
     setSelectedOrdem(ordem)
     setIsDetalhesOpen(true)
   }
 
   const adicionarProduto = () => {
-    if (!novoProduto.codigoProduto || !novoProduto.quantidade) return
+    console.log('Adicionando produto:', novoProduto)
+    
+    if (!novoProduto.codigoProduto || !novoProduto.quantidade) {
+      console.log('Produto inválido - faltam dados')
+      return
+    }
 
     const produto = produtos.find(p => p.codigo === novoProduto.codigoProduto)
-    if (!produto) return
+    if (!produto) {
+      console.log('Produto não encontrado:', novoProduto.codigoProduto)
+      return
+    }
 
     const produtoCompleto: ProdutoOrdem = {
       id: Date.now(),
@@ -294,6 +316,7 @@ export default function OrdensProducao() {
       })
     }
 
+    // Resetar formulário de produto
     setNovoProduto({
       codigoProduto: "",
       nomeProduto: "",
@@ -324,11 +347,11 @@ export default function OrdensProducao() {
     ? ordens 
     : ordens.filter(ordem => ordem.status === filtroStatus)
 
-  const getTotalProdutos = (ordem: OrdemProducao) => {
+  const getTotalProdutos = (ordem: OrdemProducaoCompleta) => {
     return ordem.produtos.reduce((total, produto) => total + produto.quantidade, 0)
   }
 
-  const getTotalProduzidos = (ordem: OrdemProducao) => {
+  const getTotalProduzidos = (ordem: OrdemProducaoCompleta) => {
     return ordem.produtos.reduce((total, produto) => total + produto.quantidadeProduzida, 0)
   }
 
@@ -406,6 +429,7 @@ export default function OrdensProducao() {
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={() => {
+              console.log('Abrindo dialog para nova ordem')
               setIsEditing(false)
               setSelectedOrdem(null)
             }}>
@@ -432,6 +456,7 @@ export default function OrdensProducao() {
                     id="descricao"
                     value={isEditing ? selectedOrdem?.descricao : novaOrdem.descricao}
                     onChange={(e) => {
+                      console.log('Alterando descrição:', e.target.value)
                       if (isEditing && selectedOrdem) {
                         setSelectedOrdem({...selectedOrdem, descricao: e.target.value})
                       } else {
@@ -549,6 +574,7 @@ export default function OrdensProducao() {
                     <Select 
                       value={novoProduto.codigoProduto} 
                       onValueChange={(value) => {
+                        console.log('Selecionando produto:', value)
                         const produto = produtos.find(p => p.codigo === value)
                         setNovoProduto({
                           ...novoProduto,
