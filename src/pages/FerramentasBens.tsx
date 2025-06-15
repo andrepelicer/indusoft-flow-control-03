@@ -1,10 +1,10 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useState } from "react"
 import { Wrench } from "lucide-react"
 import { BemFerramentaEditModal } from "@/components/BemFerramentaEditModal"
+import { ManutencaoModal, Manutencao } from "@/components/ManutencaoModal"
 
 interface BemFerramenta {
   id: number
@@ -14,8 +14,10 @@ interface BemFerramenta {
   status: string
 }
 
+type BemFerramentaWithManutencoes = BemFerramenta & { manutencoes: Manutencao[] }
+
 export default function FerramentasBens() {
-  const [itens, setItens] = useState<BemFerramenta[]>([])
+  const [itens, setItens] = useState<BemFerramentaWithManutencoes[]>([])
   const [nome, setNome] = useState("")
   const [tipo, setTipo] = useState("")
   const [codigo, setCodigo] = useState("")
@@ -23,7 +25,11 @@ export default function FerramentasBens() {
 
   // Modal gestão
   const [editOpen, setEditOpen] = useState(false)
-  const [selectedItem, setSelectedItem] = useState<BemFerramenta | null>(null)
+  const [selectedItem, setSelectedItem] = useState<BemFerramentaWithManutencoes | null>(null)
+
+  // Modal manutenção
+  const [manutencaoOpen, setManutencaoOpen] = useState(false)
+  const [itemManutencao, setItemManutencao] = useState<BemFerramentaWithManutencoes | null>(null)
 
   const cadastrar = (e: React.FormEvent) => {
     e.preventDefault()
@@ -35,6 +41,7 @@ export default function FerramentasBens() {
         tipo,
         codigo,
         status,
+        manutencoes: [],
       },
     ])
     setNome("")
@@ -47,14 +54,31 @@ export default function FerramentasBens() {
     setItens(itens.filter(i => i.id !== id))
   }
 
-  const handleEdit = (item: BemFerramenta) => {
+  const handleEdit = (item: BemFerramentaWithManutencoes) => {
     setSelectedItem(item)
     setEditOpen(true)
   }
 
   const handleSaveEdit = (edited: BemFerramenta) => {
     setItens(prev =>
-      prev.map(i => (i.id === edited.id ? edited : i))
+      prev.map(i => (i.id === edited.id ? { ...i, ...edited } : i))
+    )
+  }
+
+  // Manutenção handlers
+  const handleOpenManutencao = (item: BemFerramentaWithManutencoes) => {
+    setItemManutencao(item)
+    setManutencaoOpen(true)
+  }
+
+  const handleAddManutencao = (manutencao: Manutencao) => {
+    if (!itemManutencao) return
+    setItens(prev =>
+      prev.map(i =>
+        i.id === itemManutencao.id
+          ? { ...i, manutencoes: [manutencao, ...(i.manutencoes ?? [])] }
+          : i
+      )
     )
   }
 
@@ -111,14 +135,35 @@ export default function FerramentasBens() {
             )}
             {itens.map(i => (
               <li key={i.id} className="border px-3 py-2 rounded flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div>
+                <div className="min-w-0 flex-1">
                   <strong>{i.nome}</strong> • {i.tipo} • {i.codigo} • {i.status}
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Última manutenção:{" "}
+                    {i.manutencoes && i.manutencoes.length > 0
+                      ? `${i.manutencoes[0].data} — ${i.manutencoes[0].descricao}`
+                      : "Nunca realizada"}
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => handleEdit(i)}>
+                <div className="flex gap-2 flex-wrap">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleEdit(i)}
+                  >
                     Editar
                   </Button>
-                  <Button variant="destructive" size="sm" onClick={() => handleRemove(i.id)}>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => handleOpenManutencao(i)}
+                  >
+                    Manutenção
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleRemove(i.id)}
+                  >
                     Remover
                   </Button>
                 </div>
@@ -134,6 +179,17 @@ export default function FerramentasBens() {
         item={selectedItem}
         onClose={() => setEditOpen(false)}
         onSave={handleSaveEdit}
+      />
+
+      {/* Modal de manutenção */}
+      <ManutencaoModal
+        open={manutencaoOpen}
+        manutencoes={itemManutencao?.manutencoes ?? []}
+        itemNome={itemManutencao?.nome ?? ""}
+        onAdd={manutencao => {
+          handleAddManutencao(manutencao)
+        }}
+        onClose={() => setManutencaoOpen(false)}
       />
     </div>
   )
