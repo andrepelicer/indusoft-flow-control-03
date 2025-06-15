@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -5,6 +6,7 @@ import { useState } from "react"
 import { Wrench } from "lucide-react"
 import { BemFerramentaEditModal } from "@/components/BemFerramentaEditModal"
 import { ManutencaoModal, Manutencao } from "@/components/ManutencaoModal"
+import { BemFerramentaDashboard } from "@/components/BemFerramentaDashboard" // NOVO
 
 interface BemFerramenta {
   id: number
@@ -84,6 +86,8 @@ export default function FerramentasBens() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-4">
+      <BemFerramentaDashboard itens={itens} />
+
       <Card>
         <CardHeader>
           <CardTitle>
