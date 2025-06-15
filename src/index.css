@@ -74,35 +74,53 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-size: 14px;
   }
   
   /* Responsividade melhorada para mobile */
   @media (max-width: 768px) {
+    body {
+      font-size: 13px;
+    }
+    
     .container {
-      @apply px-3;
+      @apply px-2;
     }
     
     /* Ajustes para tabelas em dispositivos móveis */
     .table-responsive {
-      @apply overflow-x-auto;
+      @apply overflow-x-auto -mx-2;
     }
     
     .table-responsive table {
-      @apply min-w-full text-sm;
+      @apply min-w-full text-xs;
+    }
+    
+    .table-responsive th,
+    .table-responsive td {
+      @apply px-2 py-1.5 text-xs;
     }
     
     /* Formulários responsivos */
     .form-grid {
+      @apply grid-cols-1 gap-3;
+    }
+    
+    .form-grid-2 {
       @apply grid-cols-1 sm:grid-cols-2 gap-3;
     }
     
     .form-grid-3 {
-      @apply grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3;
+      @apply grid-cols-1 gap-3;
     }
     
     /* Cards responsivos */
     .card-grid {
-      @apply grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3;
+      @apply grid-cols-1 sm:grid-cols-2 gap-3;
+    }
+
+    .card-grid-4 {
+      @apply grid-cols-2 gap-2;
     }
 
     /* Ajustes para botões em mobile */
@@ -110,20 +128,59 @@
       @apply flex-col w-full space-y-2 space-x-0;
     }
 
+    .mobile-button-group {
+      @apply flex-wrap gap-2;
+    }
+
     /* Ajustes para headers de página */
     .page-header {
-      @apply flex-col items-start space-y-3;
+      @apply flex-col items-start space-y-3 mb-4;
+    }
+
+    .page-title {
+      @apply text-lg font-bold;
+    }
+
+    .page-description {
+      @apply text-sm text-muted-foreground;
+    }
+
+    /* Cards de estatísticas menores */
+    .stat-card {
+      @apply p-3;
+    }
+
+    .stat-card .stat-value {
+      @apply text-lg font-bold;
+    }
+
+    .stat-card .stat-label {
+      @apply text-xs text-muted-foreground;
+    }
+
+    /* Dialog/Modal responsivo */
+    .dialog-content {
+      @apply w-[95vw] max-w-md mx-2;
+    }
+
+    /* Input groups menores */
+    .input-group {
+      @apply space-y-2;
     }
   }
 
   /* Responsividade específica para tablets */
   @media (min-width: 768px) and (max-width: 1024px) {
     .container {
-      @apply px-4;
+      @apply px-3;
     }
     
     .form-grid-3 {
       @apply grid-cols-2;
+    }
+
+    .card-grid-4 {
+      @apply grid-cols-2 lg:grid-cols-4;
     }
   }
 
@@ -143,12 +200,37 @@
 
     /* Textos menores em mobile */
     .mobile-text-sm {
-      @apply text-sm;
+      @apply text-xs;
     }
 
     /* Padding reduzido em mobile */
     .mobile-p-2 {
       @apply p-2;
+    }
+
+    /* Botões menores em mobile */
+    .mobile-btn-sm {
+      @apply text-xs px-2 py-1;
+    }
+
+    /* Scroll horizontal para tabelas */
+    .mobile-scroll-x {
+      @apply overflow-x-auto;
+    }
+  }
+
+  /* Ajustes específicos para telas muito pequenas */
+  @media (max-width: 375px) {
+    .container {
+      @apply px-1;
+    }
+
+    .card-grid-4 {
+      @apply grid-cols-1;
+    }
+
+    body {
+      font-size: 12px;
     }
   }
 }
@@ -193,9 +275,18 @@
   }
 }
 
-/* Estilos específicos para o sidebar responsivo */
-@media (max-width: 768px) {
-  [data-sidebar="sidebar"] {
-    @apply w-full;
+/* Melhorias para touch devices */
+@media (hover: none) and (pointer: coarse) {
+  button, .button {
+    @apply min-h-[44px] min-w-[44px];
   }
+  
+  .touch-friendly {
+    @apply p-3;
+  }
+}
+
+/* Estilo para overlay de loading em mobile */
+.mobile-loading {
+  @apply fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center;
 }
