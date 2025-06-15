@@ -1,3 +1,4 @@
+
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
@@ -169,13 +170,22 @@ export function PedidoVendaForm({ open, onOpenChange, pedido, onSave }: PedidoVe
       quantidade: i.quantidade 
     })))
     
-    if (itens.length === 0) {
+    // Para novos pedidos, exigir pelo menos um item
+    if (!isEditingRef.current && itens.length === 0) {
       toast({
         title: "Erro",
         description: "Adicione pelo menos um item ao pedido.",
         variant: "destructive"
       })
       return
+    }
+
+    // Para edições, permitir salvar mesmo sem itens (pode estar em processo de edição)
+    if (isEditingRef.current && itens.length === 0) {
+      toast({
+        title: "Aviso",
+        description: "Pedido será salvo sem itens. Adicione itens posteriormente se necessário.",
+      })
     }
 
     // Garantir que os itens estão incluídos no pedido com validação final
@@ -204,13 +214,22 @@ export function PedidoVendaForm({ open, onOpenChange, pedido, onSave }: PedidoVe
       quantidade: i.quantidade 
     })))
     
-    onSave(pedidoComItens)
-    
-    toast({
-      title: pedido ? "Pedido atualizado" : "Pedido criado",
-      description: "As informações foram salvas com sucesso.",
-    })
-    onOpenChange(false)
+    try {
+      onSave(pedidoComItens)
+      
+      toast({
+        title: pedido ? "Pedido atualizado" : "Pedido criado",
+        description: "As informações foram salvas com sucesso.",
+      })
+      onOpenChange(false)
+    } catch (error) {
+      console.error('Erro ao salvar pedido:', error)
+      toast({
+        title: "Erro",
+        description: "Erro ao salvar o pedido. Tente novamente.",
+        variant: "destructive"
+      })
+    }
   }
 
   // Não resetar os itens quando o modal fecha para evitar perda de dados
