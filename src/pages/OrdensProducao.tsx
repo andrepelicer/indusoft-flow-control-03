@@ -223,7 +223,7 @@ export default function OrdensProducao() {
         quantidade: selectedOrdem.produtos[0]?.quantidade || 0,
         status: selectedOrdem.status === 'Planejada' ? 'Pendente' :
                 selectedOrdem.status === 'Em Andamento' ? 'Em Andamento' :
-                selectedOrdem.status === 'Concluído' ? 'Concluído' :
+                selectedOrdem.status === 'Finalizada' ? 'Concluído' :
                 selectedOrdem.status === 'Cancelada' ? 'Cancelado' : 'Pendente',
         dataCriacao: selectedOrdem.dataInicio,
         dataPrevisao: selectedOrdem.dataPrevisao,
